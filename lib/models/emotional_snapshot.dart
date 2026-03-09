@@ -6,6 +6,7 @@ class EmotionalSnapshot {
   final String? audioUrl;
   final Map<String, double>? sentimentScores;
   final String? companionResponse;
+  final List<double>? embedding;
 
   EmotionalSnapshot({
     required this.id,
@@ -15,6 +16,7 @@ class EmotionalSnapshot {
     this.audioUrl,
     this.sentimentScores,
     this.companionResponse,
+    this.embedding,
   });
 
   Map<String, dynamic> toJson() {
@@ -26,6 +28,7 @@ class EmotionalSnapshot {
       'audioUrl': audioUrl,
       'sentimentScores': sentimentScores,
       'companionResponse': companionResponse,
+      'embedding': embedding,
     };
   }
 
@@ -40,6 +43,9 @@ class EmotionalSnapshot {
           ? Map<String, double>.from(json['sentimentScores']) 
           : null,
       companionResponse: json['companionResponse'],
+      embedding: json['embedding'] != null 
+          ? List<double>.from((json['embedding'] as List).map((x) => (x as num).toDouble()))
+          : null,
     );
   }
 }

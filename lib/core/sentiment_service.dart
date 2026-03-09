@@ -6,9 +6,11 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/emotional_snapshot.dart';
 import '../core/api_config.dart';
+import 'memory_service.dart';
 
 class SentimentService {
   final _random = Random();
+  final _memoryService = MemoryService();
 
   /// Analyzes audio for emotional content. 
   /// Uses OpenAI if a key is available, otherwise falls back to refined mock logic.
@@ -21,9 +23,29 @@ class SentimentService {
         // 1. Transcription via Whisper
         final transcript = await _transcribeAudio(audioPath);
         debugPrint('SentimentService: Transcription success: "$transcript"');
+        // 2. Generate Embedding for the transcript
+        List<double>? embedding;
+        String memoryContext = "";
         
-        // 2. Sentiment Extraction via GPT-4o Mini
-        final analysis = await _extractSentiment(transcript);
+        try {
+          embedding = await _generateEmbedding(transcript);
+          
+          if (embedding != null) {
+             // 3. Fetch similar past snapshots
+             final similarPast = await _memoryService.findSimilarVibes(embedding);
+             if (similarPast.isNotEmpty) {
+                memoryContext = "Here is relevant past context about the user:\n";
+                for (var snap in similarPast) {
+                  memoryContext += "- On ${snap.timestamp.toLocal().toString().split(' ')[0]}, they felt ${snap.mood} and said: '${snap.transcript}'. Finn replied: '${snap.companionResponse}'\n";
+                }
+             }
+          }
+        } catch (e) {
+          debugPrint('SentimentService: Embedding/Memory fetch failed (Continuing without context): $e');
+        }
+
+        // 4. Sentiment Extraction via GPT-4o Mini
+        final analysis = await _extractSentiment(transcript, context: memoryContext);
         debugPrint('SentimentService: GPT Analysis success: $analysis');
         
         return EmotionalSnapshot(
@@ -33,6 +55,7 @@ class SentimentService {
           transcript: transcript,
           sentimentScores: Map<String, double>.from(analysis['scores'] ?? {}),
           companionResponse: analysis['response'],
+          embedding: embedding,
         );
       } catch (e) {
         debugPrint('SentimentService: AI Analysis failed with error: $e');
@@ -45,30 +68,36 @@ class SentimentService {
     // --- Mock Fallback Logic ---
     await Future.delayed(const Duration(seconds: 2)); // Simulate network
     
-    final moods = ['joy', 'calm', 'sad', 'anxious'];
+    final moods = [
+      'joy', 'excited', 'proud',
+      'sad', 'grieving', 'lonely',
+      'anxious', 'overwhelmed', 'fearful',
+      'calm', 'reflective', 'tired', 'bored',
+      'angry', 'frustrated', 'annoyed'
+    ];
     final selectedMood = moods[_random.nextInt(moods.length)];
 
     final map = {
-      'joy': [
-        "I'm feeling incredibly productive today! Everything finally clicked.",
-        "Had a great call with my family. Feeling very connected.",
-        "The sun is out and I just feel light. Ready to take on anything."
-      ],
-      'calm': [
-        "Just finished a long walk. My mind feel still and clear.",
-        "Looking at the rain outside with a cup of tea. Peaceful.",
-        "The morning meditation really helped me center myself."
-      ],
-      'sad': [
-        "Feeling a bit heavy today. Not sure why, just low energy.",
-        "I miss home. Sometimes the city feels a bit isolating.",
-        "Things didn't go as planned and I'm feeling the weight of it."
-      ],
-      'anxious': [
-        "There's so much on my plate and I don't know where to start.",
-        "My heart is racing a bit. Worried about the presentation tomorrow.",
-        "Just feeling on edge. Everything feels a bit too loud today."
-      ]
+      'joy': ["I'm feeling incredibly productive today! Everything finally clicked."],
+      'excited': ["I can't wait for the trip this weekend! It's going to be amazing."],
+      'proud': ["I finally finished that massive project. Feels so good to be done."],
+      
+      'sad': ["Feeling a bit heavy today. Not sure why, just low energy."],
+      'grieving': ["I'm just really missing my grandfather today."],
+      'lonely': ["It feels like everyone is busy lately. Kinda wishing I had someone to talk to."],
+      
+      'anxious': ["There's so much on my plate and I don't know where to start."],
+      'overwhelmed': ["My inbox just keeps growing. I can't keep up with all the demands right now."],
+      'fearful': ["I have my performance review tomorrow and I'm really scared about what they'll say."],
+      
+      'calm': ["Just finished a long walk. My mind feels still and clear."],
+      'reflective': ["I was just thinking about how much I've changed over the last year."],
+      'tired': ["Didn't sleep well at all. I'm just dragging through the day."],
+      'bored': ["Nothing seems interesting right now. Just scrolling mindlessly."],
+      
+      'angry': ["I cannot believe they canceled the meeting again without telling me!"],
+      'frustrated': ["I've been trying to fix this bug for hours and it makes no sense!"],
+      'annoyed': ["The neighbor's dog has been barking all morning and I can't concentrate."]
     };
 
     final responses = map[selectedMood]!;
@@ -76,9 +105,25 @@ class SentimentService {
     
     final responseMap = {
       'joy': "I'm so glad to hear that! It's radiating exactly the right energy.",
-      'calm': "That sounds incredibly peaceful. It's good to pause.",
+      'excited': "That is amazing! I love hearing you so fired up.",
+      'proud': "You absolutely should be! That's a huge accomplishment.",
+      
       'sad': "I hear you. It's completely okay to feel that weight today.",
+      'grieving': "I'm so sorry. Take all the time you need to process that.",
+      'lonely': "I'm right here with you. You aren't alone.",
+      
       'anxious': "Take a deep breath. We can navigate this together step by step.",
+      'overwhelmed': "Let's pause. We just need to focus on the very next step, nothing else.",
+      'fearful': "It's natural to be scared, but you are strong enough to handle this.",
+      
+      'calm': "That sounds incredibly peaceful. It's good to pause.",
+      'reflective': "That's a beautiful perspective to have on your journey.",
+      'tired': "Rest is productive too. Please be gentle with yourself today.",
+      'bored': "Sometimes the mind just needs a break from constant stimulation.",
+      
+      'angry': "That is completely valid. You have every right to feel that way.",
+      'frustrated': "I completely understand why that's driving you crazy.",
+      'annoyed': "Ugh, that sounds incredibly draining. I'm sorry you have to deal with that."
     };
     final companionResp = responseMap[selectedMood];
 
@@ -88,9 +133,9 @@ class SentimentService {
       mood: selectedMood,
       transcript: transcript,
       sentimentScores: {
-        'positive': selectedMood == 'joy' ? 0.9 : 0.2,
-        'negative': selectedMood == 'sad' ? 0.8 : 0.1,
-        'neutral': selectedMood == 'calm' ? 0.9 : 0.3,
+        'positive': ['joy', 'excited', 'proud', 'calm'].contains(selectedMood) ? 0.9 : 0.2,
+        'negative': ['sad', 'grieving', 'lonely', 'anxious', 'fearful', 'angry', 'frustrated'].contains(selectedMood) ? 0.8 : 0.1,
+        'neutral': ['reflective', 'tired', 'bored'].contains(selectedMood) ? 0.9 : 0.3,
       },
       companionResponse: companionResp,
     );
@@ -138,7 +183,30 @@ class SentimentService {
     return data['text'] ?? '';
   }
 
-  Future<Map<String, dynamic>> _extractSentiment(String text) async {
+  Future<List<double>?> _generateEmbedding(String text) async {
+    final url = Uri.parse('${ApiConfig.openAiBaseUrl}/embeddings');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${ApiConfig.openAiApiKey}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'model': 'text-embedding-3-small',
+        'input': text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<dynamic> embeddingArray = data['data'][0]['embedding'];
+      return List<double>.from(embeddingArray.map((x) => (x as num).toDouble()));
+    } else {
+       throw Exception('Failed to generate embedding: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> _extractSentiment(String text, {String context = ""}) async {
     final url = Uri.parse('${ApiConfig.openAiBaseUrl}/chat/completions');
     final response = await http.post(
       url,
@@ -151,7 +219,7 @@ class SentimentService {
         'messages': [
           {
             'role': 'system',
-            'content': 'Analyze the following emotional reflection. Output ONLY a JSON object with: "mood" (one of: joy, calm, sad, anxious), "scores" (object with double values for "positive", "negative", "neutral" ranging from 0.0 to 1.0), and "response" (a short, empathetic 1-sentence response as an AI companion named Finn).'
+            'content': 'Analyze the following emotional reflection. Output ONLY a JSON object with: "mood" (MUST be exactly one of: joy, excited, proud, sad, grieving, lonely, anxious, overwhelmed, fearful, calm, reflective, tired, bored, angry, frustrated, annoyed), "scores" (object with double values for "positive", "negative", "neutral" ranging from 0.0 to 1.0), and "response" (a short, empathetic 1-sentence response as an AI companion named Finn).\n\n$context'
           },
           {'role': 'user', 'content': text}
         ],

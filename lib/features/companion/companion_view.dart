@@ -1,16 +1,21 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:record/record.dart';
 import '../../providers/mood_provider.dart';
 import '../../core/app_theme.dart';
 import '../../core/audio_service.dart';
 import '../../core/sentiment_service.dart';
+import '../../core/tts_service.dart';
 import '../../providers/history_provider.dart';
 import '../history/reflection_view.dart';
 import 'widgets/safety_nudge.dart';
 import 'widgets/companion_avatar.dart';
 import '../monetization/pro_paywall_view.dart';
+import '../../core/notification_service.dart';
 
 class CompanionView extends ConsumerStatefulWidget {
   const CompanionView({super.key});
@@ -21,34 +26,66 @@ class CompanionView extends ConsumerStatefulWidget {
 
 class _CompanionViewState extends ConsumerState<CompanionView> {
   bool _isRecording = false;
+  bool _isProcessing = false;
   String? _lastCompanionResponse;
+  
   final _audioService = AudioService();
   final _sentimentService = SentimentService();
+  final _ttsService = TtsService();
 
-  Future<void> _handleRecordingToggle(bool isStarting) async {
+  void _handleRecordingToggle(bool isStarting) async {
     if (isStarting) {
+      if (_ttsService.isPlaying) {
+        _ttsService.stop();
+      }
       setState(() {
         _isRecording = true;
+        _isProcessing = false;
         _lastCompanionResponse = null;
       });
       await _audioService.startRecording();
     } else {
-      setState(() => _isRecording = false);
+      setState(() {
+        _isRecording = false;
+        _isProcessing = true;
+      });
       final path = await _audioService.stopRecording();
       if (path != null) {
-        // Trigger Analysis
-        final snapshot = await _sentimentService.analyzeVoice(path);
-        
-        // Save to History (and Supabase)
-        await ref.read(historyProvider.notifier).addSnapshot(snapshot);
-        
-        ref.read(moodProvider.notifier).state = snapshot.mood;
-        
-        if (mounted) {
-          setState(() {
-            _lastCompanionResponse = snapshot.companionResponse;
-          });
+        try {
+          final snapshot = await _sentimentService.analyzeVoice(path);
+          await ref.read(historyProvider.notifier).addSnapshot(snapshot);
+          ref.read(moodProvider.notifier).state = snapshot.mood;
+          
+          if (mounted) {
+            setState(() {
+              _lastCompanionResponse = snapshot.companionResponse;
+              _isProcessing = false;
+            });
+          }
+
+          // Schedule a proactive check-in if the user is feeling low
+          if (snapshot.mood == 'sad' || snapshot.mood == 'anxious') {
+             // Request permissions natively on the first run
+             await NotificationService().requestPermissions();
+             // Schedule for 2 hours later (for demo/testing, using 15 seconds)
+             await NotificationService().scheduleCheckIn(
+               snapshot.mood, 
+               const Duration(seconds: 15),
+             );
+          }
+          
+          if (snapshot.companionResponse != null) {
+            await _ttsService.speak(snapshot.companionResponse!);
+          } else {
+            await Future.delayed(const Duration(seconds: 1));
+          }
+        } catch (e) {
+          debugPrint('Analysis failed: $e');
+        } finally {
+          if (mounted) setState(() => _isProcessing = false);
         }
+      } else {
+        setState(() => _isProcessing = false);
       }
     }
   }
@@ -56,6 +93,7 @@ class _CompanionViewState extends ConsumerState<CompanionView> {
   @override
   void dispose() {
     _audioService.dispose();
+    _ttsService.dispose();
     super.dispose();
   }
 
@@ -124,7 +162,7 @@ class _CompanionViewState extends ConsumerState<CompanionView> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40.0),
                     child: Text(
-                      _getStateMessage(mood, _isRecording),
+                      _getStateMessage(mood, _isRecording, _isProcessing, _ttsService.isPlaying),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: const Color(0xFF1E293B).withValues(alpha: 0.8),
@@ -134,7 +172,7 @@ class _CompanionViewState extends ConsumerState<CompanionView> {
                         fontSize: 14,
                       ),
                     ).animate(
-                      key: ValueKey('msg_$mood$_isRecording'),
+                      key: ValueKey('msg_$mood$_isRecording$_isProcessing${_ttsService.isPlaying}'),
                     ).fadeIn(duration: 800.ms).slideY(begin: 0.1, end: 0),
                   ),
                 ],
@@ -265,27 +303,30 @@ class _CompanionViewState extends ConsumerState<CompanionView> {
 
   Widget _buildControls() {
     return Center(
-      child: GestureDetector(
-        onTapDown: (_) => _handleRecordingToggle(true),
-        onTapUp: (_) => _handleRecordingToggle(false),
-        onTapCancel: () => _handleRecordingToggle(false),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(50),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: AnimatedContainer(
-              duration: 200.ms,
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTapDown: (_) => _handleRecordingToggle(true),
+            onTapUp: (_) => _handleRecordingToggle(false),
+            onTapCancel: () => _handleRecordingToggle(false),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(50),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: AnimatedContainer(
+                  duration: 200.ms,
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     color: _isRecording 
                       ? Colors.redAccent.withValues(alpha: 0.7) 
                       : Colors.white.withValues(alpha: 0.6),
                     border: Border.all(
-                      color: _isRecording 
+                       color: _isRecording 
                         ? Colors.redAccent.withValues(alpha: 0.8) 
-                        : const Color(0xFF1E293B).withValues(alpha: 0.1),
+                         : const Color(0xFF1E293B).withValues(alpha: 0.1),
                       width: 2,
                     ),
                     boxShadow: [
@@ -293,21 +334,23 @@ class _CompanionViewState extends ConsumerState<CompanionView> {
                         color: _isRecording 
                           ? Colors.redAccent.withValues(alpha: 0.3) 
                           : Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 20,
-                    spreadRadius: 2,
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Icon(
-                _isRecording ? Icons.square_rounded : Icons.mic_rounded,
-                color: _isRecording ? Colors.white : const Color(0xFF1E293B),
-                size: 40,
+                  child: Icon(
+                    _isRecording ? Icons.square_rounded : Icons.mic_rounded,
+                    color: _isRecording ? Colors.white : const Color(0xFF1E293B),
+                    size: 40,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ).animate(target: _isRecording ? 1 : 0)
-       .scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 200.ms, curve: Curves.elasticOut),
+          ).animate(target: _isRecording ? 1 : 0)
+           .scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 200.ms, curve: Curves.elasticOut),
+        ],
+      ),
     );
   }
 
@@ -321,8 +364,12 @@ class _CompanionViewState extends ConsumerState<CompanionView> {
     }
   }
 
-  String _getStateMessage(String mood, bool isRecording) {
-    if (isRecording) return 'LISTENING SYMPATHETICALLY...';
+  String _getStateMessage(String mood, bool isRecording, bool isProcessing, bool isSpeaking) {
+    if (isSpeaking) return 'SPEAKING...';
+    if (isProcessing) return 'PROCESSING...';
+    if (isRecording) {
+      return 'LISTENING SYMPATHETICALLY...';
+    }
     switch (mood) {
       case 'joy': return 'TAKING IN YOUR ENERGY...';
       case 'sad': return 'HOLDING SPACE FOR YOU...';

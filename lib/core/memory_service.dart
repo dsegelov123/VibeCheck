@@ -90,7 +90,28 @@ class MemoryService {
 
   /// Vector search for similar emotional states (Conceptual)
   Future<List<EmotionalSnapshot>> findSimilarVibes(List<double> vector) async {
-    // This would call a RPC function in Supabase for pgvector matching
-    return [];
+    final client = _client;
+    if (client == null) return [];
+
+    try {
+      final response = await client.rpc('match_snapshots', params: {
+        'query_embedding': vector,
+        'match_threshold': 0.70, // 0 to 1, higher means stricter match
+        'match_count': 3,
+      });
+
+      return (response as List).map((json) {
+        return EmotionalSnapshot(
+          id: json['id'] ?? '',
+          timestamp: DateTime.now(), // We don't query timestamp in the RPC back, just the context
+          transcript: json['transcript'],
+          mood: json['mood'] ?? 'calm',
+          companionResponse: json['companion_response'],
+        );
+      }).toList();
+    } catch (e) {
+      print('MemoryService: Failed to find similar vibes: $e');
+      return [];
+    }
   }
 }

@@ -48,11 +48,17 @@ class CompanionAvatar extends StatelessWidget {
               borderRadius: BorderRadius.circular(160),
               child: Stack(
                 children: [
-                  // Base Image
+                  // Base Image with Crossfade Transition
                   Positioned.fill(
-                    child: Image.asset(
-                      _getAvatarAsset(),
-                      fit: BoxFit.cover,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 800),
+                      switchInCurve: Curves.easeIn,
+                      switchOutCurve: Curves.easeOut,
+                      child: Image.asset(
+                        _getAvatarAsset(mood),
+                        key: ValueKey<String>(_getAvatarAsset(mood)),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   
@@ -142,18 +148,37 @@ class CompanionAvatar extends StatelessWidget {
   }
 
 
-  String _getAvatarAsset() {
-    return 'images/avatar_female.png';
+  String _getAvatarAsset(String mood) {
+    // Joyful spectrum
+    if (['joy', 'excited', 'proud'].contains(mood)) {
+      return 'images/expression_joyful.png';
+    }
+    // Deeply sad / struggling spectrum
+    if (['sad', 'grieving', 'lonely'].contains(mood)) {
+      return 'images/expression_concerned.png';
+    }
+    // High anxiety spectrum
+    if (['anxious', 'overwhelmed', 'fearful'].contains(mood)) {
+      return 'images/expression_reassuring.png';
+    }
+    // Calm / resting spectrum
+    if (['calm', 'reflective', 'tired', 'bored'].contains(mood)) {
+      return 'images/expression_serene.png';
+    }
+    // Agitated spectrum
+    if (['angry', 'frustrated', 'annoyed'].contains(mood)) {
+      return 'images/expression_attentive.png';
+    }
+    
+    return 'images/expression_serene.png'; // Fallback
   }
 
   Color _getMoodColor(String mood) {
-    switch (mood) {
-      case 'joy': return Colors.amber;
-      case 'sad': return Colors.blue;
-      case 'calm': return Colors.greenAccent;
-      case 'anxious': return Colors.red;
-      default: return Colors.white;
-    }
+    if (['joy', 'excited', 'proud'].contains(mood)) return Colors.amber;
+    if (['sad', 'grieving', 'lonely'].contains(mood)) return Colors.blue;
+    if (['calm', 'reflective', 'tired', 'bored'].contains(mood)) return Colors.greenAccent;
+    if (['anxious', 'overwhelmed', 'fearful', 'angry', 'frustrated', 'annoyed'].contains(mood)) return Colors.red;
+    return Colors.white;
   }
 }
 

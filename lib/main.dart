@@ -5,10 +5,12 @@ import 'providers/mood_provider.dart';
 import 'features/companion/companion_view.dart';
 import 'features/home/dashboard_view.dart';
 import 'core/supabase_config.dart';
+import 'core/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.initialize();
+  await NotificationService().init();
 
   runApp(
     const ProviderScope(

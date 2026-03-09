@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   audioplayers_windows
   record_windows
-  rive_native
   url_launcher_windows
 )
 
