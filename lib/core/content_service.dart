@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/meditation_session.dart';
 import 'supabase_config.dart';
@@ -13,27 +15,43 @@ class ContentService {
 
   Future<List<MeditationSession>> fetchSessions() async {
     final client = _client;
-    
-    // Fallback to mock data if not initialized or offline
-    if (client == null) {
-      debugPrint('ContentService: Supabase not initialized. Using mock sessions.');
-      return _getMockSessions();
+
+    // Always load the asset bundle first
+    final assetSessions = await _loadFromAsset();
+
+    // Then try Supabase — only use it if it has MORE sessions than the asset bundle
+    if (client != null) {
+      try {
+        final response = await client
+            .from('meditation_sessions')
+            .select()
+            .order('created_at', ascending: false);
+
+        final supabaseSessions = (response as List)
+            .map((json) => MeditationSession.fromJson(json))
+            .toList();
+
+        if (supabaseSessions.length > assetSessions.length) {
+          debugPrint('ContentService: Using ${supabaseSessions.length} sessions from Supabase.');
+          return supabaseSessions;
+        }
+      } catch (e) {
+        debugPrint('ContentService: Supabase fetch failed: $e. Using asset bundle.');
+      }
     }
 
+    return assetSessions;
+  }
+
+  Future<List<MeditationSession>> _loadFromAsset() async {
     try {
-      final response = await client
-          .from('meditation_sessions')
-          .select()
-          .order('created_at', ascending: false);
-      
-      final sessions = (response as List)
-          .map((json) => MeditationSession.fromJson(json))
-          .toList();
-      
-      if (sessions.isEmpty) return _getMockSessions();
+      final jsonString = await rootBundle.loadString('assets/sessions.json');
+      final List<dynamic> jsonList = jsonDecode(jsonString);
+      final sessions = jsonList.map((json) => MeditationSession.fromJson(json)).toList();
+      debugPrint('ContentService: Loaded ${sessions.length} sessions from asset bundle.');
       return sessions;
     } catch (e) {
-      debugPrint('ContentService: Failed to fetch sessions from Supabase: $e');
+      debugPrint('ContentService: Asset bundle load failed: $e. Using minimal mock data.');
       return _getMockSessions();
     }
   }
@@ -45,10 +63,10 @@ class ContentService {
         title: 'Morning Clarity',
         description: 'Start your day with purpose and focused breath.',
         durationMinutes: 5,
-        category: 'Focus',
+        category: 'Morning Ritual',
         imageUrl: '',
-        audioUrl: '', // Audio playback not fully implemented for mocks yet
-        colors: ['#FFE0B2', '#FFCC80'],
+        audioUrl: '',
+        colors: ['#FFF9C4', '#FFD54F'],
       ),
       MeditationSession(
         id: 'mock-2',
@@ -58,17 +76,17 @@ class ContentService {
         category: 'Sleep',
         imageUrl: '',
         audioUrl: '',
-        colors: ['#C5CAE9', '#9FA8DA'],
+        colors: ['#C5CAE9', '#7986CB'],
       ),
       MeditationSession(
         id: 'mock-3',
         title: 'Anxiety SOS',
         description: 'Quick relief for overwhelming moments.',
         durationMinutes: 3,
-        category: 'Relief',
+        category: 'Anxiety SOS',
         imageUrl: '',
         audioUrl: '',
-        colors: ['#FFCDD2', '#EF9A9A'],
+        colors: ['#FFCCBC', '#FF8A65'],
       ),
     ];
   }

@@ -7,6 +7,7 @@ class MeditationSession {
   final String imageUrl;
   final String audioUrl;
   final List<String> colors;
+  final String? script; // Full narration text (from asset bundle)
 
   MeditationSession({
     required this.id,
@@ -17,6 +18,7 @@ class MeditationSession {
     required this.imageUrl,
     required this.audioUrl,
     required this.colors,
+    this.script,
   });
 
   factory MeditationSession.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class MeditationSession {
       imageUrl: json['image_url'] ?? '',
       audioUrl: json['audio_url'] ?? '',
       colors: (json['colors'] as List?)?.map((e) => e.toString()).toList() ?? ['#000000', '#333333'],
+      script: json['script'] as String?,
     );
   }
 
@@ -42,6 +45,7 @@ class MeditationSession {
       'image_url': imageUrl,
       'audio_url': audioUrl,
       'colors': colors,
+      if (script != null) 'script': script,
     };
   }
 }

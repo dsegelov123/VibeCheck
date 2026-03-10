@@ -64,6 +64,12 @@ class DesignSystem {
     color: textSlateDeep,
   );
 
+  static TextStyle titleMedium = GoogleFonts.outfit(
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    color: textSlateDeep,
+  );
+
   static TextStyle bodyMedium = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w500,
