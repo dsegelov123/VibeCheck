@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../home/dashboard_view.dart';
+import '../auth/auth_screen.dart';
 import '../monetization/pro_paywall_view.dart';
 import '../../core/app_theme.dart';
+import '../../core/providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OnboardingView extends StatefulWidget {
+class OnboardingView extends ConsumerStatefulWidget {
   const OnboardingView({super.key});
-
   @override
-  State<OnboardingView> createState() => _OnboardingViewState();
+  ConsumerState<OnboardingView> createState() => _OnboardingViewState();
 }
 
-class _OnboardingViewState extends State<OnboardingView> {
+class _OnboardingViewState extends ConsumerState<OnboardingView> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -29,14 +30,9 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 
   Future<void> _finishOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_completed_onboarding', true);
-
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardView()),
-      );
-    }
+    debugPrint('OnboardingView: Finishing onboarding...');
+    await ref.read(onboardingProvider.notifier).completeOnboarding();
+    // The root VibeCheckApp watches onboardingProvider and will switch to AuthScreen
   }
 
   @override

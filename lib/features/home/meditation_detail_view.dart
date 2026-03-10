@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../models/meditation_session.dart';
+import '../../core/design_system.dart';
+import '../../core/app_theme.dart';
 
 class MeditationDetailView extends ConsumerStatefulWidget {
   final MeditationSession session;
@@ -24,14 +27,14 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
     super.initState();
     _title = widget.session.title;
     _duration = '${widget.session.durationMinutes} min';
-    final hexString = widget.session.colors.isNotEmpty ? widget.session.colors.first : '#B5A5FF';
+    final hexString = widget.session.colors.isNotEmpty ? widget.session.colors.first : '#F02D3A';
     _baseColor = Color(int.parse(hexString.replaceAll('#', '0xFF')));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: DesignSystem.background,
       body: Stack(
         children: [
           // 1. Dynamic Background
@@ -43,8 +46,8 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    _baseColor.withValues(alpha: 0.05),
-                    Colors.white,
+                    _baseColor.withValues(alpha: 0.03),
+                    DesignSystem.background,
                   ],
                 ),
               ),
@@ -80,11 +83,13 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
       children: [
         IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close_rounded, color: Color(0xFF0F172A), size: 30),
+          icon: const Icon(Icons.close_rounded, color: DesignSystem.textSlateDeep, size: 30),
         ),
         IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.favorite_border_rounded, color: Color(0xFF0F172A)),
+          onPressed: () {
+             HapticFeedback.selectionClick();
+          },
+          icon: const Icon(Icons.favorite_border_rounded, color: DesignSystem.textSlateDeep),
         ),
       ],
     );
@@ -122,23 +127,17 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _baseColor,
-                  _baseColor.withValues(alpha: 0.7),
-                ],
-              ),
+              color: DesignSystem.background,
               boxShadow: [
                 BoxShadow(
-                  color: _baseColor.withValues(alpha: 0.3),
+                  color: _baseColor.withValues(alpha: 0.15),
                   blurRadius: 40,
                   spreadRadius: 5,
                 ),
               ],
+              border: Border.all(color: _baseColor.withValues(alpha: 0.2), width: 2),
             ),
-            child: const Icon(Icons.spa_rounded, color: Colors.white, size: 48),
+            child: Icon(Icons.spa_rounded, color: _baseColor, size: 48),
           ).animate(onPlay: (c) => c.repeat(reverse: true))
            .scale(begin: const Offset(1, 1), end: const Offset(1.05, 1.05), duration: 2.seconds),
         ],
@@ -151,21 +150,23 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
       children: [
         Text(
           _title,
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF0F172A),
-            letterSpacing: -1,
-          ),
+          textAlign: TextAlign.center,
+          style: DesignSystem.titleLarge.copyWith(fontSize: 32, height: 1.1),
         ).animate().fadeIn().slideY(begin: 0.2, end: 0),
-        const SizedBox(height: 12),
-        Text(
-          'GUIDED SESSION • $_duration',
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF64748B),
-            letterSpacing: 2,
+        const SizedBox(height: 16),
+        Container(
+           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+           decoration: BoxDecoration(
+              color: DesignSystem.vibeRed.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
+           ),
+           child: Text(
+            'GUIDED SESSION • $_duration',
+            style: DesignSystem.labelBold.copyWith(
+              fontSize: 10,
+              color: DesignSystem.vibeRed,
+              letterSpacing: 1.5,
+            ),
           ),
         ).animate().fadeIn(delay: 200.ms),
       ],
@@ -181,22 +182,22 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
             trackHeight: 4,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-            activeTrackColor: _baseColor,
-            inactiveTrackColor: _baseColor.withValues(alpha: 0.1),
-            thumbColor: _baseColor,
+            activeTrackColor: DesignSystem.vibeRed,
+            inactiveTrackColor: DesignSystem.vibeRed.withValues(alpha: 0.1),
+            thumbColor: DesignSystem.vibeRed,
           ),
           child: Slider(
             value: _progress,
             onChanged: (v) => setState(() => _progress = v),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('02:45', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
-              Text('13:00', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
+              Text('02:45', style: DesignSystem.labelMuted.copyWith(fontSize: 11, fontWeight: FontWeight.w700)),
+              Text('13:00', style: DesignSystem.labelMuted.copyWith(fontSize: 11, fontWeight: FontWeight.w700)),
             ],
           ),
         ),
@@ -206,23 +207,26 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
           children: [
             IconButton(
               icon: const Icon(Icons.skip_previous_rounded, size: 36),
-              color: const Color(0xFF0F172A),
+              color: DesignSystem.textSlateDeep,
               onPressed: () {},
             ),
             const SizedBox(width: 32),
             GestureDetector(
-              onTap: () => setState(() => _isPlaying = !_isPlaying),
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                setState(() => _isPlaying = !_isPlaying);
+              },
               child: Container(
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF0F172A),
+                  color: DesignSystem.vibeRed,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      color: DesignSystem.vibeRed.withValues(alpha: 0.2),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
@@ -236,7 +240,7 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
             const SizedBox(width: 32),
             IconButton(
               icon: const Icon(Icons.skip_next_rounded, size: 36),
-              color: const Color(0xFF0F172A),
+              color: DesignSystem.textSlateDeep,
               onPressed: () {},
             ),
           ],

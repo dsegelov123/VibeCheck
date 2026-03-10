@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../core/design_system.dart';
+import '../../core/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
@@ -22,7 +25,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
     final history = ref.watch(historyProvider);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: DesignSystem.background,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -33,6 +36,8 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                   _buildSectionLabel('Summary Period'),
+                  const SizedBox(height: 12),
                   _buildPeriodSelector(),
                   const SizedBox(height: 32),
                   _buildMainChart(history),
@@ -40,7 +45,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
                   _buildMoodDistribution(history),
                   const SizedBox(height: 32),
                   _buildInsightsList(history),
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -48,36 +53,43 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ReflectionView()),
-        ),
-        backgroundColor: const Color(0xFF0F172A),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ReflectionView()),
+          );
+        },
+        backgroundColor: DesignSystem.vibeRed,
+        elevation: 8,
         icon: const Icon(Icons.history_rounded, color: Colors.white),
-        label: const Text('View Journal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: Text('VIEW JOURNAL', style: DesignSystem.labelBold.copyWith(color: Colors.white, fontSize: 12)),
       ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+     return Text(
+      text,
+      style: DesignSystem.labelMuted.copyWith(fontWeight: FontWeight.w700),
     );
   }
 
   Widget _buildSliverAppBar(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 120,
-      backgroundColor: Colors.white.withValues(alpha: 0.9),
+      backgroundColor: DesignSystem.background,
       elevation: 0,
       pinned: true,
+      centerTitle: false,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-        title: const Text(
+        title: Text(
           'Emotional Weather',
-          style: TextStyle(
-            color: Color(0xFF0F172A),
-            fontWeight: FontWeight.w900,
-            fontSize: 24,
-            letterSpacing: -1,
-          ),
+          style: DesignSystem.titleLarge.copyWith(fontSize: 24),
         ),
       ),
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A)),
+        icon: const Icon(Icons.arrow_back_rounded, color: DesignSystem.textSlateDeep),
         onPressed: () => Navigator.pop(context),
       ),
     );
@@ -86,14 +98,15 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
   Widget _buildPeriodSelector() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: DesignSystem.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignSystem.textSlateDeep.withValues(alpha: 0.05)),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
         children: [
-          Expanded(child: _buildTabButton('7 D', 0)),
-          Expanded(child: _buildTabButton('1 M', 1)),
+          Expanded(child: _buildTabButton('7 DAYS', 0)),
+          Expanded(child: _buildTabButton('1 MONTH', 1)),
         ],
       ),
     );
@@ -102,23 +115,25 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
   Widget _buildTabButton(String title, int index) {
     final isSelected = _selectedTab == index;
     return GestureDetector(
-      onTap: () => setState(() => _selectedTab = index),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedTab = index);
+      },
       child: AnimatedContainer(
-        duration: 200.ms,
+        duration: 250.ms,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? DesignSystem.background : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]
-              : [],
+          boxShadow: isSelected ? DesignSystem.softShadow : [],
+          border: isSelected ? Border.all(color: DesignSystem.textSlateDeep.withValues(alpha: 0.05)) : null,
         ),
         alignment: Alignment.center,
         child: Text(
           title,
-          style: TextStyle(
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+          style: DesignSystem.labelBold.copyWith(
+            fontSize: 11,
+            color: isSelected ? DesignSystem.vibeRed : DesignSystem.textSlateMuted,
           ),
         ),
       ),
@@ -138,7 +153,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
       ).toList();
       
       double heightFactor = 0.05;
-      Color color = Colors.grey.shade200;
+      Color color = DesignSystem.textSlateDeep.withValues(alpha: 0.05);
       
       if (dayHistory.isNotEmpty) {
         final latest = dayHistory.first; 
@@ -147,7 +162,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
       }
       return {
         'label': daysToShow == 7 
-            ? DateFormat('E').format(date).substring(0, 3)
+            ? DateFormat('E').format(date).toUpperCase().substring(0, 3)
             : (index % 5 == 0 ? DateFormat('d').format(date) : ''),
         'heightFactor': heightFactor,
         'color': color,
@@ -156,11 +171,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
-      ),
+      decoration: AppTheme.cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -168,10 +179,10 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _selectedTab == 0 ? 'This Week' : 'This Month',
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A)),
+                _selectedTab == 0 ? 'WEEKLY TREND' : 'MONTHLY OVERVIEW',
+                style: DesignSystem.labelBold.copyWith(color: DesignSystem.textSlateDeep, fontSize: 13),
               ),
-              const Icon(Icons.show_chart_rounded, color: Color(0xFF64748B)),
+              Icon(Icons.show_chart_rounded, color: DesignSystem.vibeRed.withValues(alpha: 0.4), size: 20),
             ],
           ),
           const SizedBox(height: 48),
@@ -198,7 +209,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
           child: Container(
             width: totalDays == 7 ? 24 : 6,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: DesignSystem.surface,
               borderRadius: BorderRadius.circular(12),
             ),
             child: FractionallySizedBox(
@@ -224,7 +235,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
           height: 14,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8)),
+            style: DesignSystem.labelMuted.copyWith(fontSize: 10, fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -234,7 +245,6 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
   Widget _buildMoodDistribution(dynamic history) {
     if (history.isEmpty) return const SizedBox.shrink();
 
-    // Calculate percentage breakdown
     final Map<String, int> counts = {'joy': 0, 'calm': 0, 'sad': 0, 'anxious': 0};
     final now = DateTime.now();
     final daysToFilter = _selectedTab == 0 ? 7 : 30;
@@ -251,10 +261,7 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Mood Distribution',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF334155)),
-        ),
+        _buildSectionLabel('Distribution'),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -272,22 +279,20 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
     return Container(
       width: 70,
       height: 90,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+      decoration: AppTheme.cardDecoration(color: DesignSystem.background).copyWith(
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             '$percentage%',
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A)),
+            style: DesignSystem.titleLarge.copyWith(fontSize: 18),
           ),
           const SizedBox(height: 4),
           Text(
             mood.toUpperCase(),
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 9, color: Color(0xFF64748B), letterSpacing: 1),
+            style: DesignSystem.labelMuted.copyWith(fontSize: 9, fontWeight: FontWeight.w800, color: color),
           ),
         ],
       ),
@@ -298,21 +303,18 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'AI Insights',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF334155)),
-        ),
+        _buildSectionLabel('Premium Insights'),
         const SizedBox(height: 16),
         _buildInsightCard(
           icon: Icons.wb_sunny_rounded,
-          color: Colors.amber,
+          color: DesignSystem.vibeRed,
           title: 'Morning Momentum',
           description: 'You tend to log "joy" primarily before 10 AM. Capturing these moments is setting a positive tone for your days.',
         ),
         const SizedBox(height: 12),
         _buildInsightCard(
           icon: Icons.nightlight_round,
-          color: Colors.indigo,
+          color: DesignSystem.textSlateDeep,
           title: 'Evening Unwind',
           description: 'Your recent evenings show an increase in "calm", suggesting your new meditation routines are effectively lowering stress.',
         ),
@@ -323,18 +325,14 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
   Widget _buildInsightCard({required IconData icon, required Color color, required String title, required String description}) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
+      decoration: AppTheme.cardDecoration(),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),
@@ -344,11 +342,11 @@ class _TrendsViewState extends ConsumerState<TrendsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF0F172A))),
-                const SizedBox(height: 4),
+                Text(title, style: DesignSystem.titleLarge.copyWith(fontSize: 16)),
+                const SizedBox(height: 6),
                 Text(
                   description,
-                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.4, fontWeight: FontWeight.w500),
+                  style: DesignSystem.bodyMedium.copyWith(color: DesignSystem.textSlateMuted, fontSize: 13, height: 1.5),
                 ),
               ],
             ),

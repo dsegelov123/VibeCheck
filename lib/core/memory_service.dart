@@ -38,9 +38,12 @@ class MemoryService {
             .select()
             .order('timestamp', ascending: false);
         
-        history = (response as List)
-            .map((json) => EmotionalSnapshot.fromJson(json))
-            .toList();
+        if (response is List) {
+          history = response
+              .whereType<Map<String, dynamic>>()
+              .map((json) => EmotionalSnapshot.fromJson(json))
+              .toList();
+        }
       } catch (e) {
         print('Failed to fetch history: $e');
       }
@@ -100,15 +103,18 @@ class MemoryService {
         'match_count': 3,
       });
 
-      return (response as List).map((json) {
-        return EmotionalSnapshot(
-          id: json['id'] ?? '',
-          timestamp: DateTime.now(), // We don't query timestamp in the RPC back, just the context
-          transcript: json['transcript'],
-          mood: json['mood'] ?? 'calm',
-          companionResponse: json['companion_response'],
-        );
-      }).toList();
+      if (response is List) {
+        return response.whereType<Map<String, dynamic>>().map((json) {
+          return EmotionalSnapshot(
+            id: json['id']?.toString() ?? '',
+            timestamp: DateTime.now(), // We don't query timestamp in the RPC back, just the context
+            transcript: json['transcript']?.toString(),
+            mood: json['mood']?.toString() ?? 'calm',
+            companionResponse: json['companion_response']?.toString(),
+          );
+        }).toList();
+      }
+      return [];
     } catch (e) {
       print('MemoryService: Failed to find similar vibes: $e');
       return [];

@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
+import 'security_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -56,16 +57,20 @@ class NotificationService {
       return;
     }
 
+    final isSecure = await SecurityService().isSecurityEnabled();
+
     // Determine the message based on previous mood
-    String title = "Thinking of you";
-    String body = "Just checking in. How are you feeling now?";
+    String title = isSecure ? "VibeCheck" : "Thinking of you";
+    String body = isSecure ? "New message from VibeCheck" : "Just checking in. How are you feeling now?";
     
-    if (mood == 'sad') {
-      title = "Hey Finn here 👋";
-      body = "You were feeling a bit down earlier. Just checking in to see if you want to talk.";
-    } else if (mood == 'anxious') {
-      title = "Checking in";
-      body = "You were feeling anxious earlier. Remember to take a deep breath. I'm here if you need me.";
+    if (!isSecure) {
+      if (mood == 'sad') {
+        title = "Hey Finn here 👋";
+        body = "You were feeling a bit down earlier. Just checking in to see if you want to talk.";
+      } else if (mood == 'anxious') {
+        title = "Checking in";
+        body = "You were feeling anxious earlier. Remember to take a deep breath. I'm here if you need me.";
+      }
     }
 
     await _flutterLocalNotificationsPlugin.zonedSchedule(
@@ -92,5 +97,42 @@ class NotificationService {
     );
     
     debugPrint('NotificationService: Scheduled an empathetic check-in for $delay from now.');
+  }
+
+  Future<void> schedulePersonaCheckIn({
+    required String personaName,
+    required DateTime scheduledTime,
+    required String context,
+  }) async {
+    if (kIsWeb) return;
+
+    final isSecure = await SecurityService().isSecurityEnabled();
+    final title = isSecure ? "VibeCheck" : "Message from $personaName";
+    final body = isSecure ? "New message from VibeCheck" : "Hey! Checking in. $context. How are you doing?";
+
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      scheduledTime.difference(DateTime(2026)).inMinutes, // Semi-unique ID
+      title,
+      body,
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'vibecheck_checkins',
+          'VibeCheck Check-ins',
+          channelDescription: 'Proactive emotional check-ins',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          interruptionLevel: InterruptionLevel.active,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'check_in_nudge',
+    );
+    
+    debugPrint('NotificationService: Scheduled $personaName check-in for $scheduledTime');
   }
 }

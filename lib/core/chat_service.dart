@@ -1,13 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/chat_message.dart';
 import '../../models/companion_persona.dart';
+import '../../models/user_profile.dart';
 import 'sentiment_service.dart';
 import 'local_chat_repository.dart';
+import 'user_memory_service.dart';
+import 'notification_service.dart';
+import '../../providers/mood_provider.dart';
 
 // Provides the list of chat messages for a specific companion
 final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier, List<ChatMessage>, String>((ref, companionId) {
   return ChatMessagesNotifier(
-    companionId, 
+    companionId,
+    ref,
     ref.read(sentimentServiceProvider),
     ref.read(localChatRepositoryProvider),
   );
@@ -15,23 +21,24 @@ final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier, 
 
 class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
   final String companionId;
+  final Ref _ref;
   final SentimentService _sentimentService;
   final LocalChatRepository _chatRepository;
 
-  ChatMessagesNotifier(this.companionId, this._sentimentService, this._chatRepository) : super([]) {
+  ChatMessagesNotifier(this.companionId, this._ref, this._sentimentService, this._chatRepository) : super([]) {
     _loadInitialMessages();
   }
 
   Future<void> _loadInitialMessages() async {
     // 1. Try to load existing history
     final history = await _chatRepository.loadMessages(companionId);
-    
+
     if (history.isNotEmpty) {
       state = history;
       return;
     }
 
-    // 2. Fallback to mock initial greeting if no history exists
+    // 2. Fallback to companion-specific greeting if no history exists
     state = [
       ChatMessage(
         id: 'init_$companionId',
@@ -41,20 +48,30 @@ class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
         timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
       ),
     ];
-    
-    // Save the initial greeting
+
     await _chatRepository.saveMessages(companionId, state);
   }
 
   String _getGreetingForPersona(String id) {
-    switch (id) {
-      case 'riley':
+    final persona = CompanionPersona.all.firstWhere(
+      (p) => p.id == id,
+      orElse: () => CompanionPersona.maya,
+    );
+    switch (persona.role) {
+      case 'The Motivation Coach':
         return "Hey! Ready to crush some goals today? What's on your mind?";
-      case 'sage':
-        return "Greetings. How is your spirit feeling in this moment?";
-      case 'finn':
-      default:
-        return "Hi there. I'm here. How are you feeling today?";
+      case 'The Mindfulness Guide':
+        return "Welcome. Take a breath. How is your spirit feeling in this moment?";
+      case 'The Career Mentor':
+        return "Good to see you. What's on your professional radar today?";
+      case 'The Relationship Advisor':
+        return "Hi there. I'm all ears. What's been going on in your world?";
+      case 'The Fitness Coach':
+        return "Hey! How's the body feeling today? Ready to build some good habits?";
+      case 'The Sparring Partner':
+        return "Great, you're here! I've been thinking — got something to debate?";
+      default: // Best Friend
+        return "Hey! So good to hear from you. What's going on?";
     }
   }
 
@@ -69,25 +86,63 @@ class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
     );
     state = [...state, userMsg];
 
-    // 2. Send to OpenAI for Chat Completion using persona.systemPrompt
+    // 2. Read memory and current mood to enrich the AI context
+    final UserProfile userProfile = _ref.read(userProfileProvider);
+    
+    // 2b. Real-time mood detection from text (Phase 24)
+    final textMood = await _sentimentService.analyzeTextSentiment(text);
+    if (textMood != null) {
+      _ref.read(moodProvider.notifier).state = textMood;
+    }
+    
+    final String currentMood = _ref.read(moodProvider);
+
+    // 3. Send to OpenAI with full context (persona + memory + mood)
     final responseText = await _sentimentService.generateChatResponse(
       persona: persona,
       history: state,
+      userProfile: userProfile.isEmpty ? null : userProfile,
+      currentMood: currentMood == 'neutral' ? null : currentMood,
     );
+
+    String cleanedResponse = responseText;
+    final scheduleRegex = RegExp(r'\[SCHEDULE_NOTIF:\s*([^\]]+)\]');
+    final match = scheduleRegex.firstMatch(responseText);
+    
+    if (match != null) {
+      final isoString = match.group(1)?.trim();
+      if (isoString != null) {
+        try {
+          final scheduledTime = DateTime.parse(isoString);
+          cleanedResponse = responseText.replaceFirst(match.group(0)!, '').trim();
+          
+          // Schedule the notification
+          NotificationService().schedulePersonaCheckIn(
+            personaName: persona.name,
+            scheduledTime: scheduledTime,
+            context: "You asked me to follow up with you around now",
+          );
+        } catch (e) {
+          debugPrint('ChatService: Failed to parse schedule date: $isoString');
+        }
+      }
+    }
 
     final aiMsg = ChatMessage(
       id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
       companionId: companionId,
       sender: MessageSender.ai,
-      text: responseText,
+      text: cleanedResponse,
       timestamp: DateTime.now(),
     );
 
     state = [...state, aiMsg];
-    
-    // 3. Persist the updated conversation
+
+    // 4. Persist the updated conversation
     await _chatRepository.saveMessages(companionId, state);
 
-    // 4. TODO: Run sentiment extraction on the user's message in the background to update the Mood Orbit
+    // 5. Extract & update long-term memory in the background (non-blocking)
+    _ref.read(userProfileProvider.notifier).updateFromConversation(text, responseText, companionId);
   }
 }
+

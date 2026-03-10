@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
 import '../../models/companion_persona.dart';
-import '../../core/app_theme.dart';
+import '../../core/design_system.dart';
 import 'companion_chat_view.dart';
 import '../monetization/pro_paywall_view.dart';
 import '../../core/subscription_service.dart';
@@ -20,23 +21,17 @@ class CompanionListView extends ConsumerWidget {
     final isPro = ref.watch(isProProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Very light gray background
+      backgroundColor: DesignSystem.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1E293B)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Companions',
-          style: TextStyle(
-            color: Color(0xFF1E293B),
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-            letterSpacing: -0.5,
+        title: Text('Companions', style: DesignSystem.titleLarge),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu_rounded, color: DesignSystem.textSlateDeep),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-        ),
+          const SizedBox(width: 8),
+        ],
         centerTitle: true,
       ),
       body: SafeArea(
@@ -47,30 +42,14 @@ class CompanionListView extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. "Continue Talking" Hero Card
-              const Text(
-                'Recently Active',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.5,
-                ),
-              ),
+              _buildSectionLabel('Recently Active'),
               const SizedBox(height: 12),
               _buildRecentCompanionCard(context, recentPersona),
               
               const SizedBox(height: 32),
               
               // 2. Free Companions
-              const Text(
-                'Free Companions',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.5,
-                ),
-              ),
+              _buildSectionLabel('Free Companions'),
               const SizedBox(height: 12),
               ...CompanionPersona.freeCompanions.where((p) => p.id != recentPersona.id).map((persona) {
                 return Padding(
@@ -85,15 +64,7 @@ class CompanionListView extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Premium Companions',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF64748B),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                   _buildSectionLabel('Premium'),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -101,7 +72,7 @@ class CompanionListView extends ConsumerWidget {
                        color: Colors.amber.shade100,
                        borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text('PRO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amber.shade900)),
+                    child: Text('PRO', style: DesignSystem.labelBold.copyWith(fontSize: 10, color: Colors.amber.shade900)),
                   )
                 ],
               ),
@@ -119,6 +90,13 @@ class CompanionListView extends ConsumerWidget {
     );
   }
 
+  Widget _buildSectionLabel(String text) {
+     return Text(
+      text,
+      style: DesignSystem.labelMuted.copyWith(fontWeight: FontWeight.w700),
+    );
+  }
+
   Widget _buildRecentCompanionCard(BuildContext context, CompanionPersona persona) {
     return GestureDetector(
       onTap: () {
@@ -130,23 +108,8 @@ class CompanionListView extends ConsumerWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF6366F1), // Deep Indigo
-              Color(0xFF818CF8), // Medium Indigo
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF6366F1).withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+        decoration: AppTheme.cardDecoration(color: DesignSystem.background).copyWith(
+          border: Border.all(color: DesignSystem.vibeRed.withValues(alpha: 0.1), width: 1.5),
         ),
         child: Row(
           children: [
@@ -157,10 +120,10 @@ class CompanionListView extends ConsumerWidget {
                 height: 70,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white24,
-                  border: Border.all(color: Colors.white38, width: 2),
+                  color: DesignSystem.vibeRedLight,
+                  border: Border.all(color: DesignSystem.vibeRed.withValues(alpha: 0.1), width: 2),
                 ),
-                child: const Icon(Icons.person, size: 40, color: Colors.white), // Placeholder until images
+                child: const Icon(Icons.person, size: 40, color: DesignSystem.vibeRed), 
               ),
             ),
             const SizedBox(width: 20),
@@ -171,41 +134,28 @@ class CompanionListView extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: DesignSystem.vibeRed.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       'CONTINUE TALKING',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                      ),
+                      style: DesignSystem.labelBold.copyWith(fontSize: 10),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     persona.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
+                    style: DesignSystem.titleLarge.copyWith(fontSize: 24),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Tap to jump back in...',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 14,
-                    ),
+                    style: DesignSystem.labelMuted,
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 32),
+            const Icon(Icons.chevron_right_rounded, color: DesignSystem.vibeRed, size: 32),
           ],
         ),
       ),
@@ -230,18 +180,7 @@ class CompanionListView extends ConsumerWidget {
       },
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-        ),
+        decoration: AppTheme.cardDecoration(),
         child: Row(
           children: [
             Hero(
@@ -251,10 +190,10 @@ class CompanionListView extends ConsumerWidget {
                 height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFF1F5F9), // Slate 100
-                  border: Border.all(color: Colors.black12, width: 1),
+                  color: DesignSystem.background,
+                  border: Border.all(color: DesignSystem.textSlateDeep.withValues(alpha: 0.05), width: 1),
                 ),
-                child: const Icon(Icons.person, size: 30, color: Color(0xFF94A3B8)),
+                child: Icon(Icons.person, size: 30, color: DesignSystem.vibeRed.withValues(alpha: 0.6)),
               ),
             ),
             const SizedBox(width: 16),
@@ -264,23 +203,14 @@ class CompanionListView extends ConsumerWidget {
                 children: [
                   Text(
                     persona.name,
-                    style: const TextStyle(
-                      color: Color(0xFF1E293B),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
+                    style: DesignSystem.titleLarge.copyWith(fontSize: 18),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Text(
                         persona.role,
-                        style: const TextStyle(
-                          color: Color(0xFF6366F1), // Indigo
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: DesignSystem.labelBold.copyWith(fontSize: 11),
                       ),
                       if (isLocked) ...[
                         const SizedBox(width: 6),
@@ -291,11 +221,7 @@ class CompanionListView extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     persona.description,
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 13,
-                      height: 1.3,
-                    ),
+                    style: DesignSystem.bodyMedium.copyWith(fontSize: 13, color: DesignSystem.textSlateMuted),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

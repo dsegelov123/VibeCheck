@@ -9,6 +9,7 @@ import '../core/api_config.dart';
 import 'memory_service.dart';
 import '../models/companion_persona.dart';
 import '../models/chat_message.dart';
+import '../models/user_profile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final sentimentServiceProvider = Provider<SentimentService>((ref) {
@@ -249,10 +250,14 @@ class SentimentService {
     return content;
   }
 
-  /// Generates a conversational response based on persona and chat history
+  /// Generates a conversational response based on persona and chat history.
+  /// Optionally injects [userProfile] (long-term memory) and [currentMood]
+  /// into the system prompt to make replies personal and tone-aware.
   Future<String> generateChatResponse({
     required CompanionPersona persona,
     required List<ChatMessage> history,
+    UserProfile? userProfile,
+    String? currentMood,
   }) async {
     if (!ApiConfig.hasApiKey) {
       await Future.delayed(const Duration(seconds: 1));
@@ -260,10 +265,59 @@ class SentimentService {
     }
 
     final url = Uri.parse('${ApiConfig.openAiBaseUrl}/chat/completions');
-    
+
+    // ── Build contextual prefix ───────────────────────────────────────────
+    final buffer = StringBuffer();
+
+    // Long-term memory block
+    if (userProfile != null && !userProfile.isEmpty) {
+      buffer.writeln('[Memory about this user]');
+      if (userProfile.name != null) {
+        buffer.writeln('Name: ${userProfile.name}');
+      }
+      if (userProfile.activeFacts.isNotEmpty) {
+        buffer.writeln('Active context:');
+        for (final fact in userProfile.activeFacts) {
+          buffer.writeln('- ${fact.text}');
+        }
+      }
+      buffer.writeln();
+    }
+
+    // Mood-aware tone block
+    if (currentMood != null && currentMood.isNotEmpty && currentMood != 'neutral') {
+      buffer.writeln('[User\'s current emotional state]');
+      buffer.writeln(
+          'The user was recently detected as feeling: $currentMood. '
+          'Adjust your tone and opening accordingly — be empathetic to this emotional state.');
+      buffer.writeln();
+    }
+
+    // Check-in & Scheduling Management (Phase 24)
+    final now = DateTime.now();
+    buffer.writeln('[Check-in Management]');
+    buffer.writeln('Current Date/Time: ${now.toIso8601String()}');
+    if (userProfile != null && userProfile.pendingCheckIns.isNotEmpty) {
+      buffer.writeln('Upcoming events found in user memory that might need a follow-up:');
+      for (final event in userProfile.pendingCheckIns) {
+        buffer.writeln('- $event');
+      }
+      buffer.writeln('INSTRUCTION: If the user hasn\'t been asked yet, gently ask for permission to check in after ONE of these events (e.g., "I\'d love to check in with you after your meeting. Would that be okay?").');
+    }
+    buffer.writeln('SCHEDULING RULES:');
+    buffer.writeln('1. If the user asks for a check-in or says "Yes" to your offer, but hasn\'t provided a TIME, you MUST ask: "What time should I reach out?"');
+    buffer.writeln('2. If a specific time/date is agreed upon, generate your response and APPEND this hidden trigger at the very end: [SCHEDULE_NOTIF: ISO_TIMESTAMP].');
+    buffer.writeln('3. Calculate the ISO_TIMESTAMP to be shortly after the event (e.g. +1 hour).');
+    buffer.writeln();
+
+    final contextPrefix = buffer.toString();
+    final fullSystemPrompt = contextPrefix.isNotEmpty
+        ? '$contextPrefix${persona.systemPrompt}'
+        : persona.systemPrompt;
+
     // Convert our internal history to OpenAI format
     final messages = [
-      {'role': 'system', 'content': persona.systemPrompt},
+      {'role': 'system', 'content': fullSystemPrompt},
       // Take the last 40 messages for context window management
       ...history.reversed.take(40).toList().reversed.map((msg) => {
         'role': msg.sender == MessageSender.user ? 'user' : 'assistant',
@@ -297,5 +351,40 @@ class SentimentService {
       debugPrint('SentimentService Chat Exception: $e');
       return "Something went wrong on my end. Can we try that again?";
     }
+  }
+
+  /// Quickly analyzes the mood of a text message.
+  Future<String?> analyzeTextSentiment(String text) async {
+    if (!ApiConfig.hasApiKey) return null;
+
+    try {
+      final url = Uri.parse('${ApiConfig.openAiBaseUrl}/chat/completions');
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${ApiConfig.openAiApiKey}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': 'gpt-4o-mini',
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'Analyze the mood of the following user message. Output ONLY a single word mood from this list: joy, excited, proud, sad, grieving, lonely, anxious, overwhelmed, fearful, calm, reflective, tired, bored, angry, frustrated, annoyed, neutral. Only return neutral if no strong emotion is present.'
+            },
+            {'role': 'user', 'content': text}
+          ],
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final content = data['choices'][0]['message']['content'].toString().toLowerCase().trim();
+        return content == 'neutral' ? null : content;
+      }
+    } catch (e) {
+      debugPrint('SentimentService: Text sentiment analysis failed: $e');
+    }
+    return null;
   }
 }
