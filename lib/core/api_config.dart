@@ -1,4 +1,5 @@
 class ApiConfig {
+  // ⚠️  Replace these with your actual keys. Do not commit real keys to git!
   static const String openAiApiKey = 'YOUR_OPENAI_API_KEY_HERE';
   static const String openAiBaseUrl = 'https://api.openai.com/v1';
 

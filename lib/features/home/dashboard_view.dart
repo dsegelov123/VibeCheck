@@ -8,7 +8,7 @@ import '../../providers/mood_provider.dart';
 import '../../providers/content_provider.dart';
 import '../../providers/history_provider.dart';
 import '../../core/app_theme.dart';
-import '../companion/companion_view.dart';
+import '../chat/companion_list_view.dart';
 import '../history/trends_view.dart';
 import 'meditation_detail_view.dart';
 
@@ -175,7 +175,7 @@ class DashboardView extends ConsumerWidget {
       onTap: () {
         HapticFeedback.mediumImpact();
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CompanionView()),
+          MaterialPageRoute(builder: (_) => const CompanionListView()),
         );
       },
       child: Container(
@@ -416,7 +416,7 @@ class DashboardView extends ConsumerWidget {
                 onTap: () {
                   HapticFeedback.heavyImpact();
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CompanionView()),
+                    MaterialPageRoute(builder: (_) => const CompanionListView()),
                   );
                 },
                 child: Container(

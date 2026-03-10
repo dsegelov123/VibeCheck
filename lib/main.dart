@@ -2,33 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/app_theme.dart';
 import 'providers/mood_provider.dart';
-import 'features/companion/companion_view.dart';
 import 'features/home/dashboard_view.dart';
 import 'core/supabase_config.dart';
 import 'core/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'features/onboarding/onboarding_view.dart';
+import 'core/subscription_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.initialize();
   await NotificationService().init();
 
+  // Check if first launch
+  final prefs = await SharedPreferences.getInstance();
+  final showOnboarding = !(prefs.getBool('has_completed_onboarding') ?? false);
+
   runApp(
-    const ProviderScope(
-      child: VibeCheckApp(),
+    ProviderScope(
+      child: VibeCheckApp(
+        isFirstLaunch: showOnboarding,
+      ),
     ),
   );
 }
 
 class VibeCheckApp extends ConsumerWidget {
-  const VibeCheckApp({super.key});
+  final bool isFirstLaunch;
+
+  const VibeCheckApp({super.key, required this.isFirstLaunch});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize RevenueCat here
+    ref.read(subscriptionServiceProvider).init();
+
     return MaterialApp(
       title: 'VibeCheck',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      home: const DashboardView(),
+      home: isFirstLaunch ? const OnboardingView() : const DashboardView(),
     );
   }
 }

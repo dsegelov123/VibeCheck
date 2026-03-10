@@ -1,8 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-class ProPaywallView extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/subscription_service.dart';
+import '../home/dashboard_view.dart';
+
+class ProPaywallView extends ConsumerStatefulWidget {
   const ProPaywallView({super.key});
+
+  @override
+  ConsumerState<ProPaywallView> createState() => _ProPaywallViewState();
+}
+
+class _ProPaywallViewState extends ConsumerState<ProPaywallView> {
+  bool _isLoading = false;
+
+  void _handlePurchase() async {
+    setState(() => _isLoading = true);
+    final service = ref.read(subscriptionServiceProvider);
+    final success = await service.purchasePro();
+    setState(() => _isLoading = false);
+
+    if (success && mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const DashboardView()),
+        (route) => false,
+      );
+    }
+  }
+
+  void _handleRestore() async {
+    setState(() => _isLoading = true);
+    final service = ref.read(subscriptionServiceProvider);
+    final success = await service.restorePurchases();
+    setState(() => _isLoading = false);
+
+    if (success && mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const DashboardView()),
+        (route) => false,
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No active subscription found.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +80,8 @@ class ProPaywallView extends StatelessWidget {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.amber.withOpacity(0.1),
-                    border: Border.all(color: Colors.amber.withOpacity(0.3), width: 1.5),
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.3), width: 1.5),
                   ),
                   child: const Icon(Icons.stars_rounded, color: Color(0xFF92400E), size: 72),
                 ).animate(onPlay: (c) => c.repeat())
@@ -100,18 +143,20 @@ class ProPaywallView extends StatelessWidget {
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
                             elevation: 8,
-                            shadowColor: Colors.black.withOpacity(0.3),
+                            shadowColor: Colors.black.withValues(alpha: 0.3),
                           ),
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text(
-                            'START 7-DAY FREE TRIAL',
-                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                          ),
+                          onPressed: _isLoading ? null : _handlePurchase,
+                          child: _isLoading 
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
+                            : const Text(
+                                'START 7-DAY FREE TRIAL',
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                              ),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: _isLoading ? null : _handleRestore,
                         child: const Text(
                           'Restore Purchase',
                           style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),

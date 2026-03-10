@@ -7,6 +7,13 @@ import 'package:http_parser/http_parser.dart';
 import '../models/emotional_snapshot.dart';
 import '../core/api_config.dart';
 import 'memory_service.dart';
+import '../models/companion_persona.dart';
+import '../models/chat_message.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final sentimentServiceProvider = Provider<SentimentService>((ref) {
+  return SentimentService();
+});
 
 class SentimentService {
   final _random = Random();
@@ -21,7 +28,7 @@ class SentimentService {
       debugPrint('SentimentService: OpenAI Key detected. Attempting AI Analysis...');
       try {
         // 1. Transcription via Whisper
-        final transcript = await _transcribeAudio(audioPath);
+        final transcript = await transcribeAudioRaw(audioPath);
         debugPrint('SentimentService: Transcription success: "$transcript"');
         // 2. Generate Embedding for the transcript
         List<double>? embedding;
@@ -141,7 +148,7 @@ class SentimentService {
     );
   }
 
-  Future<String> _transcribeAudio(String path) async {
+  Future<String> transcribeAudioRaw(String path) async {
     final url = Uri.parse('${ApiConfig.openAiBaseUrl}/audio/transcriptions');
     final request = http.MultipartRequest('POST', url)
       ..headers['Authorization'] = 'Bearer ${ApiConfig.openAiApiKey}'
@@ -240,5 +247,55 @@ class SentimentService {
       return jsonDecode(sanitized);
     }
     return content;
+  }
+
+  /// Generates a conversational response based on persona and chat history
+  Future<String> generateChatResponse({
+    required CompanionPersona persona,
+    required List<ChatMessage> history,
+  }) async {
+    if (!ApiConfig.hasApiKey) {
+      await Future.delayed(const Duration(seconds: 1));
+      return "(Mock Response) I am functioning in offline mode. My API key is not configured.";
+    }
+
+    final url = Uri.parse('${ApiConfig.openAiBaseUrl}/chat/completions');
+    
+    // Convert our internal history to OpenAI format
+    final messages = [
+      {'role': 'system', 'content': persona.systemPrompt},
+      // Take the last 40 messages for context window management
+      ...history.reversed.take(40).toList().reversed.map((msg) => {
+        'role': msg.sender == MessageSender.user ? 'user' : 'assistant',
+        'content': msg.text,
+      }).toList(),
+    ];
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${ApiConfig.openAiApiKey}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': 'gpt-4o-mini',
+          'messages': messages,
+          // We can adjust temperature per persona later for more/less creativity
+          'temperature': 0.7, 
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['choices'][0]['message']['content'];
+      } else {
+        debugPrint('SentimentService Chat Error: ${response.statusCode} - ${response.body}');
+        return "I'm having a little trouble connecting right now.";
+      }
+    } catch (e) {
+      debugPrint('SentimentService Chat Exception: $e');
+      return "Something went wrong on my end. Can we try that again?";
+    }
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/history_provider.dart';
 import '../../core/app_theme.dart';
-import '../companion/companion_view.dart';
+import '../chat/companion_list_view.dart';
 
 class MoodOrbitView extends ConsumerStatefulWidget {
   const MoodOrbitView({super.key});
@@ -90,7 +90,7 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
             height: 340,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black.withOpacity(0.04), width: 1.5),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.04), width: 1.5),
             ),
           ),
 
@@ -124,13 +124,13 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
           ),
           boxShadow: [
             BoxShadow(
-              color: colors[1].withOpacity(0.3),
+              color: colors[1].withValues(alpha: 0.3),
               blurRadius: 20,
               spreadRadius: 2,
             ),
           ],
         ),
-        child: Icon(Icons.blur_on_rounded, color: const Color(0xFF1E293B).withOpacity(0.4), size: 24),
+        child: Icon(Icons.blur_on_rounded, color: const Color(0xFF1E293B).withValues(alpha: 0.4), size: 24),
       ).animate(onPlay: (c) => c.repeat(reverse: true))
        .scale(
          duration: 2.seconds, 
@@ -138,14 +138,14 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
          begin: const Offset(0.9, 0.9), 
          end: const Offset(1.15, 1.15) // More prominent pulse
        )
-       .shimmer(delay: (index * 200).ms, duration: 3.seconds, color: Colors.white.withOpacity(0.2)),
+       .shimmer(delay: (index * 200).ms, duration: 3.seconds, color: Colors.white.withValues(alpha: 0.2)),
     );
   }
 
   Widget _buildCentralButton() {
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const CompanionView()),
+        MaterialPageRoute(builder: (_) => const CompanionListView()),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -157,7 +157,7 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
               opacity: 0.1,
               shape: BoxShape.circle,
             ).copyWith(
-              border: Border.all(color: const Color(0xFF0F172A).withOpacity(0.1), width: 2),
+              border: Border.all(color: const Color(0xFF0F172A).withValues(alpha: 0.1), width: 2),
             ),
             child: const Center(
               child: Icon(Icons.mic_rounded, color: Color(0xFF0F172A), size: 52),
