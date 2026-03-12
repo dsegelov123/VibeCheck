@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../core/design_system.dart';
+import '../../core/app_theme.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/subscription_service.dart';
@@ -50,22 +52,12 @@ class _ProPaywallViewState extends ConsumerState<ProPaywallView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: DesignSystem.surface,
       body: Stack(
         children: [
-          // 1. Premium Light Background
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 1.5,
-                  colors: [
-                    Color(0xFFFFFBEB), // Light Amber
-                    Colors.white,
-                  ],
-                ),
-              ),
+              decoration: BoxDecoration(gradient: DesignSystem.premiumBackground),
             ),
           ),
 
@@ -75,38 +67,31 @@ class _ProPaywallViewState extends ConsumerState<ProPaywallView> {
               children: [
                 const Spacer(),
                 
-                // Icon/Badge
                 Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
+                  decoration: AppTheme.cardDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.amber.withValues(alpha: 0.1),
-                    border: Border.all(color: Colors.amber.withValues(alpha: 0.3), width: 1.5),
+                    color: DesignSystem.premium.withValues(alpha: 0.1),
+                    showBorder: true,
+                  ).copyWith(
+                    border: Border.all(color: DesignSystem.premium.withValues(alpha: 0.3), width: 1.5),
                   ),
-                  child: const Icon(Icons.stars_rounded, color: Color(0xFF92400E), size: 72),
+                  child: Icon(Icons.stars_rounded, color: DesignSystem.premiumAccent.withValues(alpha: 0.8), size: 72),
                 ).animate(onPlay: (c) => c.repeat())
-                 .shimmer(duration: 2.seconds, color: Colors.white70),
+                 .shimmer(duration: 2.seconds, color: DesignSystem.onAccent.withValues(alpha: 0.5)),
 
                 const SizedBox(height: 48),
                 
-                const Text(
+                Text(
                   'VibeCheck Pro',
-                  style: TextStyle(
-                    color: Color(0xFF1E293B),
-                    fontSize: 40,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1.5,
-                  ),
+                  style: DesignSystem.h1,
                 ),
                 
                 const SizedBox(height: 16),
                 
                 Text(
                   'Deepen your emotional connection.',
-                  style: TextStyle(
-                    color: const Color(0xFF64748B),
-                    fontSize: 16,
-                  ),
+                  style: DesignSystem.body.copyWith(color: DesignSystem.textMuted),
                 ),
 
                 const SizedBox(height: 64),
@@ -124,12 +109,9 @@ class _ProPaywallViewState extends ConsumerState<ProPaywallView> {
                   padding: const EdgeInsets.symmetric(horizontal: 40.0),
                   child: Column(
                     children: [
-                      const Text(
+                      Text(
                         '£4.99 / MONTH',
-                        style: TextStyle(
-                          color: Color(0xFF1E293B),
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
+                        style: DesignSystem.h2.copyWith(
                           letterSpacing: 2,
                         ),
                       ),
@@ -139,27 +121,27 @@ class _ProPaywallViewState extends ConsumerState<ProPaywallView> {
                         height: 64,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F172A),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                            backgroundColor: DesignSystem.textDeep,
+                            foregroundColor: DesignSystem.surface,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignSystem.buttonRadius)),
                             elevation: 8,
-                            shadowColor: Colors.black.withValues(alpha: 0.3),
+                            shadowColor: DesignSystem.textDeep.withValues(alpha: 0.3),
                           ),
                           onPressed: _isLoading ? null : _handlePurchase,
                           child: _isLoading 
-                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
-                            : const Text(
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: DesignSystem.onAccent))
+                            : Text(
                                 'START 7-DAY FREE TRIAL',
-                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                                style: DesignSystem.body,
                               ),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextButton(
                         onPressed: _isLoading ? null : _handleRestore,
-                        child: const Text(
+                        child: Text(
                           'Restore Purchase',
-                          style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),
+                          style: DesignSystem.label,
                         ),
                       ),
                     ],
@@ -177,7 +159,7 @@ class _ProPaywallViewState extends ConsumerState<ProPaywallView> {
             right: 24,
             child: IconButton(
               onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.close_rounded, color: Color(0xFF1E293B), size: 32),
+              icon: Icon(Icons.close_rounded, color: DesignSystem.textDeep, size: 32),
             ),
           ),
         ],
@@ -190,16 +172,12 @@ class _ProPaywallViewState extends ConsumerState<ProPaywallView> {
       padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 14),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF92400E), size: 28),
+          Icon(icon, color: DesignSystem.premiumAccent, size: 28),
           const SizedBox(width: 24),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFF1E293B), 
-                fontSize: 16, 
-                fontWeight: FontWeight.w600,
-              ),
+              style: DesignSystem.body,
             ),
           ),
         ],

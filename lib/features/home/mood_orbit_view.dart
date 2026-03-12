@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../providers/history_provider.dart';
-import '../../providers/mood_provider.dart';
-import '../../core/app_theme.dart';
+import '../../core/design_system.dart';
 import '../../core/audio_service.dart';
 import '../../core/sentiment_service.dart';
+import '../../providers/history_provider.dart';
+import '../../providers/mood_provider.dart';
 import '../chat/companion_list_view.dart';
+import '../../core/components/vibe_scaffold.dart';
 
 class MoodOrbitView extends ConsumerStatefulWidget {
   const MoodOrbitView({super.key});
@@ -74,23 +75,14 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
   Widget build(BuildContext context) {
     final history = ref.watch(historyProvider);
     
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return VibeScaffold(
+      title: 'Your Universe',
       body: Stack(
         children: [
           // 1. Light Atmosphere Background
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.2,
-                  colors: [
-                    Color(0xFFF8FAFC),
-                    Colors.white,
-                  ],
-                ),
-              ),
+              decoration: BoxDecoration(gradient: DesignSystem.orbitBackground),
             ),
           ),
 
@@ -111,16 +103,12 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
                 children: [
                   Text(
                     'Your Universe',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: const Color(0xFF0F172A),
-                    ),
+                    style: DesignSystem.h1,
                   ).animate().fadeIn(duration: 800.ms).slideX(begin: -0.2, end: 0, curve: Curves.easeOutCubic),
                   const SizedBox(height: 12),
                   Text(
                     'Emotional landscape of the last 7 days',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF64748B),
-                    ),
+                    style: DesignSystem.label,
                   ).animate().fadeIn(delay: 200.ms, duration: 800.ms),
                 ],
               ),
@@ -146,7 +134,7 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
             height: 340,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black.withValues(alpha: 0.04), width: 1.5),
+              border: Border.all(color: DesignSystem.textDeep.withValues(alpha: 0.04), width: 1.5),
             ),
           ),
 
@@ -186,7 +174,7 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
             ),
           ],
         ),
-        child: Icon(Icons.blur_on_rounded, color: const Color(0xFF1E293B).withValues(alpha: 0.4), size: 24),
+        child: Icon(Icons.blur_on_rounded, color: DesignSystem.textDeep.withValues(alpha: 0.4), size: 24),
       ).animate(onPlay: (c) => c.repeat(reverse: true))
        .scale(
          duration: 2.seconds, 
@@ -194,7 +182,7 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
          begin: const Offset(0.9, 0.9), 
          end: const Offset(1.15, 1.15)
        )
-       .shimmer(delay: (index * 200).ms, duration: 3.seconds, color: Colors.white.withValues(alpha: 0.2)),
+       .shimmer(delay: (index * 200).ms, duration: 3.seconds, color: DesignSystem.onAccent.withValues(alpha: 0.2)),
     );
   }
 
@@ -207,11 +195,10 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
           Container(
             width: 130,
             height: 130,
-            decoration: DesignSystem.glassClear.copyWith(
+            decoration: AppTheme.cardDecoration().copyWith(
               shape: BoxShape.circle,
-            ).copyWith(
               border: Border.all(
-                color: _isRecording ? Colors.red : const Color(0xFF0F172A).withValues(alpha: 0.1), 
+                color: _isRecording ? DesignSystem.accent : DesignSystem.borderColor, 
                 width: 2
               ),
             ),
@@ -220,11 +207,11 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
                 ? const SizedBox(
                     width: 40,
                     height: 40,
-                    child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFF0F172A)),
+                    child: CircularProgressIndicator(strokeWidth: 3, color: DesignSystem.textDeep),
                   )
                 : Icon(
                     _isRecording ? Icons.stop_rounded : Icons.mic_rounded, 
-                    color: _isRecording ? Colors.red : const Color(0xFF0F172A), 
+                    color: _isRecording ? DesignSystem.accent : DesignSystem.textDeep, 
                     size: 52
                   ),
             ),
@@ -238,10 +225,8 @@ class _MoodOrbitViewState extends ConsumerState<MoodOrbitView> {
           const SizedBox(height: 32),
           Text(
             _isAnalyzing ? 'ANALYZING VIBE...' : (_isRecording ? 'TAP TO STOP' : 'SPEAK TO VIBE'),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: _isRecording ? Colors.red : const Color(0xFF0F172A),
-              letterSpacing: 4,
-              fontWeight: FontWeight.w900,
+            style: DesignSystem.label.copyWith(
+              color: _isRecording ? DesignSystem.accent : DesignSystem.textDeep,
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true))
            .fadeIn(duration: 1.seconds),

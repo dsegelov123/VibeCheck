@@ -6,23 +6,41 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: DesignSystem.vibeRed,
+        seedColor: DesignSystem.accent,
         brightness: Brightness.light,
-        surface: DesignSystem.background,
+        surface: DesignSystem.surface,
+        onSurface: DesignSystem.textDeep,
       ),
       scaffoldBackgroundColor: DesignSystem.background,
       textTheme: TextTheme(
-        displayLarge: DesignSystem.displayLarge,
-        displayMedium: DesignSystem.titleLarge,
-        titleMedium: DesignSystem.titleLarge.copyWith(fontSize: 18),
-        bodyLarge: DesignSystem.bodyMedium,
-        bodyMedium: DesignSystem.bodyMedium.copyWith(fontSize: 14),
-        labelSmall: DesignSystem.labelBold,
+        displayLarge: DesignSystem.h1,
+        displayMedium: DesignSystem.h2,
+        titleMedium: DesignSystem.h2,
+        bodyLarge: DesignSystem.body,
+        bodyMedium: DesignSystem.body,
+        labelSmall: DesignSystem.label,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
+      appBarTheme: AppBarTheme(
+        backgroundColor: DesignSystem.background.withValues(alpha: 0.0),
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: DesignSystem.h2,
+        iconTheme: const IconThemeData(color: DesignSystem.textDeep),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: DesignSystem.borderColor,
+        thickness: DesignSystem.borderWidth,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: DesignSystem.textDeep,
+          foregroundColor: DesignSystem.surface,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignSystem.buttonRadius),
+          ),
+          textStyle: DesignSystem.label.copyWith(color: DesignSystem.surface),
+        ),
       ),
     );
   }
@@ -32,23 +50,22 @@ class AppTheme {
     Color? color,
     BorderRadius? borderRadius,
     BoxShape shape = BoxShape.rectangle,
+    bool showBorder = true,
+    List<BoxShadow>? boxShadow,
+    Gradient? gradient,
   }) {
     return BoxDecoration(
-      color: color ?? DesignSystem.surface,
-      borderRadius: shape == BoxShape.circle ? null : (borderRadius ?? BorderRadius.circular(24)),
+      color: color ?? (gradient == null ? DesignSystem.surface : null),
+      gradient: gradient,
+      borderRadius: shape == BoxShape.circle ? null : (borderRadius ?? BorderRadius.circular(DesignSystem.radius)),
       shape: shape,
-      boxShadow: DesignSystem.softShadow,
+      border: showBorder ? Border.all(color: DesignSystem.borderColor, width: DesignSystem.borderWidth) : null,
+      boxShadow: boxShadow ?? DesignSystem.softShadow,
     );
   }
 
-  // Mood-based Tokens (Centralized)
-  static Color getMoodColor(String mood) {
-    switch (mood) {
-      case 'joy': return DesignSystem.safeMint;
-      case 'calm': return DesignSystem.safeMint;
-      case 'anxious': return DesignSystem.vibeRedLight;
-      case 'open': return DesignSystem.openLavender;
-      default: return DesignSystem.surface;
-    }
+  // Mood-based Color Mapping (Strictly pass-through to DesignSystem)
+  static Color getMoodColor(String? mood) {
+    return DesignSystem.getMoodColor(mood);
   }
 }

@@ -88,7 +88,7 @@ class _DialingViewState extends ConsumerState<DialingView> {
                     height: 140,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: DesignSystem.vibeRed.withValues(alpha: 0.05),
+                      color: DesignSystem.accent.withValues(alpha: 0.05),
                     ),
                   ).animate(onPlay: (c) => c.repeat())
                    .scale(begin: const Offset(1, 1), end: const Offset(1.8, 1.8), duration: 1500.ms, curve: Curves.easeOut)
@@ -99,7 +99,7 @@ class _DialingViewState extends ConsumerState<DialingView> {
                     height: 140,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: DesignSystem.vibeRed.withValues(alpha: 0.1),
+                      color: DesignSystem.accent.withValues(alpha: 0.1),
                     ),
                   ).animate(onPlay: (c) => c.repeat())
                    .scale(begin: const Offset(1, 1), end: const Offset(1.4, 1.4), duration: 1500.ms, delay: 400.ms, curve: Curves.easeOut)
@@ -113,17 +113,17 @@ class _DialingViewState extends ConsumerState<DialingView> {
                       height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: DesignSystem.vibeRedLight,
-                        border: Border.all(color: DesignSystem.vibeRed.withValues(alpha: 0.2), width: 3),
+                        color: DesignSystem.accent.withValues(alpha: 0.1),
+                        border: Border.all(color: DesignSystem.accent.withValues(alpha: 0.2), width: 3),
                         boxShadow: [
                            BoxShadow(
-                             color: DesignSystem.vibeRed.withValues(alpha: 0.15),
+                             color: DesignSystem.accent.withValues(alpha: 0.15),
                              blurRadius: 20,
                              spreadRadius: 5,
                            )
                         ],
                       ),
-                      child: const Icon(Icons.person, size: 60, color: DesignSystem.vibeRed),
+                      child: Icon(Icons.person, size: 60, color: DesignSystem.accent),
                     ),
                   ),
                 ],
@@ -131,16 +131,14 @@ class _DialingViewState extends ConsumerState<DialingView> {
               const SizedBox(height: 48),
               Text(
                 'Calling...',
-                style: DesignSystem.bodyMedium.copyWith(
-                  color: DesignSystem.textSlateMuted,
+                style: DesignSystem.label.copyWith(
                   letterSpacing: 2,
-                  fontWeight: FontWeight.w600,
                 ),
               ).animate(onPlay: (c) => c.repeat(reverse: true)).fadeIn(duration: 800.ms).fadeOut(duration: 800.ms),
               const SizedBox(height: 8),
               Text(
                 widget.persona.name,
-                style: DesignSystem.displayLarge.copyWith(fontSize: 32),
+                style: DesignSystem.h1,
               ),
               const SizedBox(height: 120),
               // End Call Button
@@ -152,12 +150,12 @@ class _DialingViewState extends ConsumerState<DialingView> {
                 child: Container(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(
-                    color: DesignSystem.errorRed,
+                  decoration: BoxDecoration(
+                    color: DesignSystem.accent,
                     shape: BoxShape.circle,
                     boxShadow: DesignSystem.softShadow,
                   ),
-                  child: const Icon(Icons.call_end_rounded, color: Colors.white, size: 32),
+                  child: Icon(Icons.call_end_rounded, color: DesignSystem.surface, size: 32),
                 ),
               ).animate().slideY(begin: 1, end: 0, curve: Curves.easeOutBack, duration: 600.ms),
             ],

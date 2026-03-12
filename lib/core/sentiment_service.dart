@@ -36,7 +36,7 @@ class SentimentService {
         String memoryContext = "";
         
         try {
-          embedding = await _generateEmbedding(transcript);
+          embedding = await generateEmbedding(transcript);
           
           if (embedding != null) {
              // 3. Fetch similar past snapshots
@@ -59,11 +59,13 @@ class SentimentService {
         return EmotionalSnapshot(
           id: DateTime.now().toIso8601String(),
           timestamp: DateTime.now(),
-          mood: analysis['mood'] ?? 'calm',
+          mood: analysis['mood'] ?? 'Calmness',
           transcript: transcript,
           sentimentScores: Map<String, double>.from(analysis['scores'] ?? {}),
+          moodDistribution: Map<String, double>.from(analysis['moodDistribution'] ?? {}),
           companionResponse: analysis['response'],
           embedding: embedding,
+          behavioralTrigger: analysis['behavioralTrigger'],
         );
       } catch (e) {
         debugPrint('SentimentService: AI Analysis failed with error: $e');
@@ -77,11 +79,11 @@ class SentimentService {
     await Future.delayed(const Duration(seconds: 2)); // Simulate network
     
     final moods = [
-      'joy', 'excited', 'proud',
-      'sad', 'grieving', 'lonely',
-      'anxious', 'overwhelmed', 'fearful',
-      'calm', 'reflective', 'tired', 'bored',
-      'angry', 'frustrated', 'annoyed'
+      'Joy', 'Excitement', 'Pride',
+      'Sadness', 'Grief', 'Loneliness',
+      'Anxiety', 'Stress', 'Fear',
+      'Calmness', 'Reflection', 'Tiredness', 'Boredom',
+      'Anger', 'Frustration', 'Annoyance'
     ];
     final selectedMood = moods[_random.nextInt(moods.length)];
 
@@ -133,7 +135,15 @@ class SentimentService {
       'frustrated': "I completely understand why that's driving you crazy.",
       'annoyed': "Ugh, that sounds incredibly draining. I'm sorry you have to deal with that."
     };
-    final companionResp = responseMap[selectedMood];
+    final companionResp = responseMap[selectedMood.toLowerCase()];
+
+    // Generate a mock distribution that sums to 1.0 (100%)
+    final Map<String, double> mockDistribution = {};
+    mockDistribution[selectedMood] = 0.6; // Dominant mood
+    final secondMood = moods[(moods.indexOf(selectedMood) + 1) % moods.length];
+    final thirdMood = moods[(moods.indexOf(selectedMood) + 2) % moods.length];
+    mockDistribution[secondMood] = 0.25;
+    mockDistribution[thirdMood] = 0.15;
 
     return EmotionalSnapshot(
       id: DateTime.now().toIso8601String(),
@@ -141,11 +151,13 @@ class SentimentService {
       mood: selectedMood,
       transcript: transcript,
       sentimentScores: {
-        'positive': ['joy', 'excited', 'proud', 'calm'].contains(selectedMood) ? 0.9 : 0.2,
-        'negative': ['sad', 'grieving', 'lonely', 'anxious', 'fearful', 'angry', 'frustrated'].contains(selectedMood) ? 0.8 : 0.1,
-        'neutral': ['reflective', 'tired', 'bored'].contains(selectedMood) ? 0.9 : 0.3,
+        'positive': ['Joy', 'Excitement', 'Pride', 'Calmness'].contains(selectedMood) ? 0.9 : 0.2,
+        'negative': ['Sadness', 'Grief', 'Loneliness', 'Anxiety', 'Fear', 'Anger', 'Frustration'].contains(selectedMood) ? 0.8 : 0.1,
+        'neutral': ['Reflection', 'Tiredness', 'Boredom'].contains(selectedMood) ? 0.9 : 0.3,
       },
+      moodDistribution: mockDistribution,
       companionResponse: companionResp,
+      behavioralTrigger: 'Mock Insight',
     );
   }
 
@@ -191,7 +203,7 @@ class SentimentService {
     return data['text'] ?? '';
   }
 
-  Future<List<double>?> _generateEmbedding(String text) async {
+  Future<List<double>?> generateEmbedding(String text) async {
     final url = Uri.parse('${ApiConfig.openAiBaseUrl}/embeddings');
     final response = await http.post(
       url,
@@ -227,7 +239,7 @@ class SentimentService {
         'messages': [
           {
             'role': 'system',
-            'content': 'Analyze the following emotional reflection. Output ONLY a JSON object with: "mood" (MUST be exactly one of: joy, excited, proud, sad, grieving, lonely, anxious, overwhelmed, fearful, calm, reflective, tired, bored, angry, frustrated, annoyed), "scores" (object with double values for "positive", "negative", "neutral" ranging from 0.0 to 1.0), and "response" (a short, empathetic 1-sentence response as an AI companion named Finn).\n\n$context'
+            'content': 'Analyze the following emotional reflection. Output ONLY a JSON object with: "mood" (MUST be exactly one of: Joy, Excitement, Pride, Sadness, Grief, Loneliness, Anxiety, Stress, Fear, Calmness, Reflection, Tiredness, Boredom, Anger, Frustration, Annoyance), "scores" (object with double values for "positive", "negative", "neutral" ranging from 0.0 to 1.0), "moodDistribution" (an object mapping EVERY one of the 16 moods mentioned above to a percentage value (0.0 to 1.0). The sum of all 16 values MUST be exactly 1.0), "behavioralTrigger" (a short 2-3 word string identifying the root pattern, e.g. "Work Stress", "Social Connection", "Lack of Sleep"), and "response" (a short, empathetic 1-sentence response as an AI companion named Finn).\n\n$context'
           },
           {'role': 'user', 'content': text}
         ],
@@ -248,6 +260,11 @@ class SentimentService {
       return jsonDecode(sanitized);
     }
     return content;
+  }
+
+  /// Public method to analyze text and return a full sentiment profile.
+  Future<Map<String, dynamic>> analyzeText(String text, {String context = ""}) async {
+     return await _extractSentiment(text, context: context);
   }
 
   /// Generates a conversational response based on persona and chat history.
@@ -370,7 +387,7 @@ class SentimentService {
           'messages': [
             {
               'role': 'system',
-              'content': 'Analyze the mood of the following user message. Output ONLY a single word mood from this list: joy, excited, proud, sad, grieving, lonely, anxious, overwhelmed, fearful, calm, reflective, tired, bored, angry, frustrated, annoyed, neutral. Only return neutral if no strong emotion is present.'
+              'content': 'Analyze the mood of the following user message. Output ONLY a single word mood from this list: Joy, Excitement, Pride, Sadness, Grief, Loneliness, Anxiety, Stress, Fear, Calmness, Reflection, Tiredness, Boredom, Anger, Frustration, Annoyance, neutral. Only return neutral if no strong emotion is present.'
             },
             {'role': 'user', 'content': text}
           ],

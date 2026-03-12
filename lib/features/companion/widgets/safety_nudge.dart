@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:vibe_check_mobile/core/safety_service.dart';
 import 'package:vibe_check_mobile/core/app_theme.dart';
+import 'package:vibe_check_mobile/core/design_system.dart';
 
 class SafetyNudge extends StatelessWidget {
   const SafetyNudge({super.key});
@@ -15,23 +16,19 @@ class SafetyNudge extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: AppTheme.glassDecoration(opacity: 0.7).copyWith(
-            border: Border.all(color: Colors.redAccent.withOpacity(0.1)),
+            border: Border.all(color: DesignSystem.error.withValues(alpha: 0.1)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 28),
+                  const Icon(Icons.favorite_rounded, color: DesignSystem.error, size: 28),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       'Thinking of you. We\'re here if things feel heavy.',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E293B),
-                      ),
+                      style: DesignSystem.body,
                     ),
                   ),
                 ],
@@ -42,28 +39,28 @@ class SafetyNudge extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E293B),
-                        side: BorderSide(color: const Color(0xFF1E293B).withOpacity(0.2)),
+                        foregroundColor: DesignSystem.textDeep,
+                        side: BorderSide(color: DesignSystem.textDeep.withValues(alpha: 0.2)),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: () => SafetyService().openSamaritansWeb(),
-                      child: const Text('RESOURCES'),
+                      child: Text('RESOURCES', style: DesignSystem.label.copyWith(color: DesignSystem.textDeep)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F172A),
-                        foregroundColor: Colors.white,
+                        backgroundColor: DesignSystem.textDeep,
+                        foregroundColor: DesignSystem.onAccent,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignSystem.buttonRadius)),
                         elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.2),
+                        shadowColor: DesignSystem.textDeep.withValues(alpha: 0.2),
                       ),
                       onPressed: () => SafetyService().callSamaritans(),
-                      child: const Text('CALL NOW', style: TextStyle(fontWeight: FontWeight.w900)),
+                      child: const Text('CALL NOW', style: DesignSystem.body),
                     ),
                   ),
                 ],

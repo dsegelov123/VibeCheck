@@ -22,9 +22,9 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const DashboardView(),
     const CompanionListView(),
     const ReflectionView(),
+    const DashboardView(),
     const GuidedSessionsView(),
   ];
 
@@ -32,38 +32,31 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DesignSystem.background,
-      drawer: _buildDrawer(context),
-      body: Stack(
-        children: [
-          _pages[_currentIndex],
-          Positioned(
-            left: 24,
-            right: 24,
-            bottom: 30,
-            child: _buildBottomBar(),
-          ),
-        ],
-      ),
+      endDrawer: _buildDrawer(context),
+      body: _pages[_currentIndex],
+      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
   Widget _buildBottomBar() {
     return Container(
-      height: 76,
-      decoration: DesignSystem.glassFrosted.copyWith(
-        borderRadius: BorderRadius.circular(38),
+      decoration: const BoxDecoration(
+        color: DesignSystem.surface,
+        border: Border(
+          top: BorderSide(color: DesignSystem.borderColor, width: DesignSystem.borderWidth),
+        ),
+        boxShadow: DesignSystem.softShadow,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(38),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.home_rounded, 'Home'),
-              _buildNavItem(1, Icons.forum_rounded, 'Companions'),
-              _buildNavItem(2, Icons.edit_note_rounded, 'Journal'),
-              _buildNavItem(3, Icons.spa_rounded, 'Sessions'),
+              _buildNavItem(0, Icons.forum_outlined, 'Companions'),
+              _buildNavItem(1, Icons.edit_note_outlined, 'Journal'),
+              _buildNavItem(2, Icons.cloud_outlined, 'Weather'),
+              _buildNavItem(3, Icons.spa_outlined, 'Sessions'),
             ],
           ),
         ),
@@ -75,34 +68,28 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() => _currentIndex = index);
+        if (!isSelected) {
+          HapticFeedback.lightImpact();
+          setState(() => _currentIndex = index);
+        }
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? DesignSystem.vibeRed.withValues(alpha: 0.05) : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? DesignSystem.vibeRed : DesignSystem.textSlateMuted,
-              size: 24,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? DesignSystem.accent : DesignSystem.textMuted,
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: DesignSystem.label.copyWith(
+              color: isSelected ? DesignSystem.accent : DesignSystem.textMuted,
             ),
-            if (isSelected)
-              const SizedBox(height: 4),
-            if (isSelected)
-              Text(
-                label,
-                style: DesignSystem.labelBold.copyWith(fontSize: 10),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -110,6 +97,7 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: DesignSystem.background,
+      width: MediaQuery.of(context).size.width * 0.8,
       child: Column(
         children: [
           _buildDrawerHeader(),
@@ -154,7 +142,7 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
           _buildDrawerItem(
             icon: Icons.logout_rounded,
             title: 'Sign Out',
-            iconColor: DesignSystem.errorRed,
+            iconColor: DesignSystem.error,
             onTap: () {
               Navigator.pop(context);
               ref.read(authServiceProvider.notifier).logout();
@@ -169,11 +157,12 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
   Widget _buildDrawerHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+      alignment: Alignment.centerLeft,
       child: Row(
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 50,
+            height: 50,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               image: DecorationImage(
@@ -188,11 +177,11 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
             children: [
               Text(
                 'Alex',
-                style: DesignSystem.titleLarge,
+                style: DesignSystem.h2,
               ),
               Text(
                 'View Profile',
-                style: DesignSystem.labelBold.copyWith(fontSize: 12),
+                style: DesignSystem.label,
               ),
             ],
           ),
@@ -208,16 +197,13 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
     Color? iconColor,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? DesignSystem.textSlateDeep),
+      leading: Icon(icon, color: iconColor ?? DesignSystem.textDeep),
       title: Text(
         title,
-        style: DesignSystem.bodyMedium.copyWith(
-          fontWeight: FontWeight.w700,
-          fontSize: 15,
-        ),
+        style: DesignSystem.body,
       ),
       onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignSystem.radius)),
     );
   }
 }

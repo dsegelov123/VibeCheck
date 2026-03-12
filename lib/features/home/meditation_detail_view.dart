@@ -23,7 +23,7 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
   @override
   void initState() {
     super.initState();
-    final hexString = widget.session.colors.isNotEmpty ? widget.session.colors.first : '#F02D3A';
+    final hexString = widget.session.colors.isNotEmpty ? widget.session.colors.first : '#FF686B'; // DesignSystem.accent
     _baseColor = Color(int.parse(hexString.replaceAll('#', '0xFF')));
   }
 
@@ -111,15 +111,15 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DesignSystem.textSlateDeep, size: 36),
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 36),
           ),
           Text(
             widget.session.category.toUpperCase(),
-            style: DesignSystem.labelBold.copyWith(letterSpacing: 2, color: DesignSystem.textSlateMuted, fontSize: 10),
+            style: DesignSystem.label,
           ),
           IconButton(
             onPressed: () => HapticFeedback.selectionClick(),
-            icon: const Icon(Icons.more_vert_rounded, color: DesignSystem.textSlateDeep),
+            icon: const Icon(Icons.more_vert_rounded),
           ),
         ],
       ),
@@ -163,7 +163,7 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Colors.white, DesignSystem.background],
+                colors: [DesignSystem.surface, DesignSystem.background],
               ),
               boxShadow: [
                 BoxShadow(
@@ -208,13 +208,13 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
         Text(
           widget.session.title,
           textAlign: TextAlign.center,
-          style: DesignSystem.titleLarge.copyWith(fontSize: 34, height: 1.1, fontWeight: FontWeight.w900),
+          style: DesignSystem.h1,
         ).animate().fadeIn(duration: 800.ms).slideY(begin: 0.1, end: 0),
         const SizedBox(height: 12),
         Text(
           widget.session.description,
           textAlign: TextAlign.center,
-          style: DesignSystem.bodyMedium.copyWith(color: DesignSystem.textSlateMuted),
+          style: DesignSystem.body,
         ).animate().fadeIn(delay: 200.ms, duration: 800.ms),
       ],
     );
@@ -233,9 +233,9 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(audio.errorMessage ?? 'Playback error'),
-              backgroundColor: DesignSystem.errorRed,
-              behavior: SnackBarBehavior.floating,
-            ),
+            backgroundColor: DesignSystem.accent,
+            behavior: SnackBarBehavior.floating,
+          ),
           );
           audio.stop(); // Reset state
         }
@@ -249,9 +249,9 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
         child: Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: DesignSystem.textSlateDeep.withValues(alpha: 0.03),
+            color: DesignSystem.surface.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: DesignSystem.textSlateDeep.withValues(alpha: 0.05)),
+            border: Border.all(color: DesignSystem.borderColor),
           ),
           child: Column(
             children: [
@@ -278,11 +278,11 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(audio.positionLabel, style: DesignSystem.labelMuted.copyWith(fontSize: 11, fontWeight: FontWeight.w700)),
-                  Text(
-                    audio.duration.inSeconds > 0 ? audio.durationLabel : '${widget.session.durationMinutes}:00',
-                    style: DesignSystem.labelMuted.copyWith(fontSize: 11, fontWeight: FontWeight.w700),
-                  ),
+                Text(audio.positionLabel, style: DesignSystem.label),
+                Text(
+                  audio.duration.inSeconds > 0 ? audio.durationLabel : '${widget.session.durationMinutes}:00',
+                  style: DesignSystem.label,
+                ),
                 ],
               ),
               const SizedBox(height: 28),
@@ -292,7 +292,7 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
                   // Replay -10s
                   IconButton(
                     icon: const Icon(Icons.replay_10_rounded, size: 32),
-                    color: DesignSystem.textSlateDeep,
+                    color: DesignSystem.textDeep,
                     onPressed: audio.duration.inSeconds > 0 ? () => audio.skipBack10() : null,
                   ),
                   const SizedBox(width: 24),
@@ -321,11 +321,11 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
                       child: audio.isLoading
                           ? const Padding(
                               padding: EdgeInsets.all(20),
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(color: DesignSystem.onAccent, strokeWidth: 2),
                             )
                           : Icon(
                               audio.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                              color: Colors.white,
+                              color: DesignSystem.onAccent,
                               size: 40,
                             ),
                     ),
@@ -334,7 +334,7 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
                   // Forward +30s
                   IconButton(
                     icon: const Icon(Icons.forward_30_rounded, size: 32),
-                    color: DesignSystem.textSlateDeep,
+                    color: DesignSystem.textDeep,
                     onPressed: audio.duration.inSeconds > 0 ? () => audio.skipForward30() : null,
                   ),
                 ],
@@ -355,9 +355,9 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: DesignSystem.textSlateDeep.withValues(alpha: 0.03),
+            color: DesignSystem.textDeep.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: DesignSystem.textSlateDeep.withValues(alpha: 0.05)),
+            border: Border.all(color: DesignSystem.textDeep.withValues(alpha: 0.05)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,13 +377,13 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
                         const SizedBox(width: 4),
                         Text(
                           'Audio on iOS & Android',
-                          style: DesignSystem.labelBold.copyWith(color: _baseColor, fontSize: 10),
+                          style: DesignSystem.label.copyWith(color: _baseColor),
                         ),
                       ],
                     ),
                   ),
                   const Spacer(),
-                  Text('Read along', style: DesignSystem.labelMuted.copyWith(fontSize: 11)),
+                  Text('Read along', style: DesignSystem.label),
                 ],
               ),
               const SizedBox(height: 16),
@@ -392,11 +392,9 @@ class _MeditationDetailViewState extends ConsumerState<MeditationDetailView> {
                 child: SingleChildScrollView(
                   child: Text(
                     script ?? widget.session.description,
-                    style: DesignSystem.bodyMedium.copyWith(
-                      color: DesignSystem.textSlateDeep.withValues(alpha: 0.8),
-                      height: 1.7,
-                      fontSize: 14,
-                    ),
+                      style: DesignSystem.body.copyWith(
+                        height: 1.7,
+                      ),
                   ),
                 ),
               ),

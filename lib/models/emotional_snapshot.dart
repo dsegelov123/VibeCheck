@@ -5,8 +5,14 @@ class EmotionalSnapshot {
   final String mood;
   final String? audioUrl;
   final Map<String, double>? sentimentScores;
+  final Map<String, double>? moodDistribution; // New granular data
   final String? companionResponse;
   final List<double>? embedding;
+  final bool isJournalEntry;
+  final String? journalTitleSummary;
+  final String? journalLongSummary;
+
+  final String? behavioralTrigger; // Pattern detection (e.g. "Work Stress")
 
   EmotionalSnapshot({
     required this.id,
@@ -15,8 +21,13 @@ class EmotionalSnapshot {
     required this.mood,
     this.audioUrl,
     this.sentimentScores,
+    this.moodDistribution,
     this.companionResponse,
     this.embedding,
+    this.isJournalEntry = false,
+    this.journalTitleSummary,
+    this.journalLongSummary,
+    this.behavioralTrigger,
   });
 
   Map<String, dynamic> toJson() {
@@ -27,8 +38,13 @@ class EmotionalSnapshot {
       'mood': mood,
       'audioUrl': audioUrl,
       'sentimentScores': sentimentScores,
+      'moodDistribution': moodDistribution,
       'companionResponse': companionResponse,
       'embedding': embedding,
+      'is_journal_entry': isJournalEntry,
+      'journal_title_summary': journalTitleSummary,
+      'journal_long_summary': journalLongSummary,
+      'behavioral_trigger': behavioralTrigger,
     };
   }
 
@@ -39,18 +55,23 @@ class EmotionalSnapshot {
           ? DateTime.parse(json['timestamp']) 
           : DateTime.now(),
       transcript: json['transcript']?.toString(),
-      mood: json['mood']?.toString() ?? 'calm',
+      mood: json['mood']?.toString() ?? 'Calmness',
       audioUrl: json['audioUrl']?.toString(),
-      sentimentScores: _parseSentimentScores(json['sentimentScores']),
+      sentimentScores: _parseMap(json['sentimentScores']),
+      moodDistribution: _parseMap(json['moodDistribution']),
       companionResponse: json['companionResponse']?.toString(),
       embedding: _parseEmbedding(json['embedding']),
+      isJournalEntry: json['is_journal_entry'] == true, 
+      journalTitleSummary: json['journal_title_summary']?.toString(),
+      journalLongSummary: json['journal_long_summary']?.toString(),
+      behavioralTrigger: json['behavioral_trigger']?.toString(),
     );
   }
 
-  static Map<String, double>? _parseSentimentScores(dynamic scores) {
-    if (scores is! Map) return null;
+  static Map<String, double>? _parseMap(dynamic data) {
+    if (data is! Map) return null;
     return Map<String, double>.from(
-      scores.map((k, v) => MapEntry(k.toString(), (v as num).toDouble())),
+      data.map((k, v) => MapEntry(k.toString(), (v as num).toDouble())),
     );
   }
 

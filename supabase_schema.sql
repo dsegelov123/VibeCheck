@@ -3,14 +3,18 @@ create extension if not exists vector;
 
 -- Table for emotional snapshots
 create table if not exists public.emotional_snapshots (
-    id uuid primary key default gen_random_uuid(),
-    created_at timestamp with time zone default timezone('utc'::text, now()),
-    timestamp timestamp with time zone not null,
-    mood text not null,
-    transcript text,
-    audio_url text,
-    sentiment_scores jsonb,
-    embedding vector(1536) -- Match OpenAI embedding size
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  mood TEXT NOT NULL,
+  transcript TEXT,
+  sentiment_scores JSONB,
+  companion_response TEXT,
+  embedding vector(1536), -- Match OpenAI embedding size
+  is_journal_entry BOOLEAN DEFAULT FALSE,
+  journal_title_summary TEXT,
+  journal_long_summary TEXT,
+  mood_distribution JSONB DEFAULT '{}'::jsonb
 );
 
 -- Enable RLS

@@ -5,6 +5,7 @@ import '../../core/auth_service.dart';
 import '../home/dashboard_view.dart';
 import '../../core/app_theme.dart';
 import '../../core/security_service.dart';
+import '../../core/design_system.dart';
 
 class AuthScreen extends ConsumerWidget {
   const AuthScreen({super.key});
@@ -15,17 +16,7 @@ class AuthScreen extends ConsumerWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFFEEF2FF),
-              const Color(0xFFF5F3FF),
-              const Color(0xFFFDF2F8),
-            ],
-          ),
-        ),
+        decoration: BoxDecoration(gradient: DesignSystem.authGradient),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -36,37 +27,27 @@ class AuthScreen extends ConsumerWidget {
                 // Logo & Title
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                  decoration: AppTheme.cardDecoration(
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
+                    boxShadow: DesignSystem.mediumShadow,
                   ),
                   child: const Icon(
                     Icons.psychology,
                     size: 64,
-                    color: Color(0xFF6366F1),
+                    color: DesignSystem.brandIndigo,
                   ),
                 ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
                 const SizedBox(height: 24),
                 Text(
                   'Welcome to VibeCheck',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 32,
-                        color: const Color(0xFF1E293B),
-                      ),
+                  style: DesignSystem.h1,
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
                 const SizedBox(height: 12),
                 Text(
                   'Your companion for emotional clarity.',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF64748B),
+                  style: DesignSystem.body.copyWith(
+                        color: DesignSystem.textMuted,
                       ),
                 ).animate().fadeIn(delay: 400.ms),
                 const Spacer(),
@@ -100,12 +81,7 @@ class AuthScreen extends ConsumerWidget {
                   onPressed: () => _handleSkip(context, ref),
                   child: Text(
                     'Ignore for now',
-                    style: TextStyle(
-                      color: const Color(0xFF6366F1),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      decoration: TextDecoration.underline,
-                    ),
+                    style: DesignSystem.label,
                   ),
                 ).animate().fadeIn(delay: 1000.ms),
                 const SizedBox(height: 20),
@@ -132,12 +108,12 @@ class AuthScreen extends ConsumerWidget {
           onPressed();
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF1E293B),
+          backgroundColor: DesignSystem.surface,
+          foregroundColor: DesignSystem.textDeep,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.black.withOpacity(0.05)),
+            side: BorderSide(color: DesignSystem.textDeep.withValues(alpha: 0.05)),
           ),
         ),
         child: Row(
@@ -147,10 +123,7 @@ class AuthScreen extends ConsumerWidget {
             const SizedBox(width: 12),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: DesignSystem.body,
             ),
           ],
         ),
@@ -186,34 +159,34 @@ class AuthScreen extends ConsumerWidget {
       context: context,
       isDismissible: false,
       enableDrag: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: DesignSystem.background.withValues(alpha: 0.0),
       builder: (context) => Container(
         padding: const EdgeInsets.all(32),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        decoration: AppTheme.cardDecoration(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
-                shape: BoxShape.circle,
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.cardDecoration(
+                  color: DesignSystem.brandIndigo.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  showBorder: false,
+                ),
+                child: const Icon(Icons.fingerprint, size: 48, color: DesignSystem.brandIndigo),
               ),
-              child: const Icon(Icons.fingerprint, size: 48, color: Color(0xFF6366F1)),
-            ),
             const SizedBox(height: 24),
             Text(
               'Secure Your Conversations?',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 24),
+              style: DesignSystem.h2,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Use your device biometrics or passcode to keep your chats private. This will be required every time you open the app.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+              style: DesignSystem.body,
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -229,17 +202,17 @@ class AuthScreen extends ConsumerWidget {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
-                  foregroundColor: Colors.white,
+                  backgroundColor: DesignSystem.brandIndigo,
+                  foregroundColor: DesignSystem.surface,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                child: const Text('Enable Secure Access', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text('Enable Secure Access', style: DesignSystem.body.copyWith(color: DesignSystem.surface)),
               ),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => _navigateToDashboard(context),
-              child: const Text('Maybe Later', style: TextStyle(color: Color(0xFF64748B))),
+              child: Text('Maybe Later', style: DesignSystem.label),
             ),
             const SizedBox(height: 12),
           ],

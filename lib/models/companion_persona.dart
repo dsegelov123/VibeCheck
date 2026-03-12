@@ -14,7 +14,7 @@ class CompanionPersona {
     required this.description,
     required this.avatarAsset,
     required this.systemPrompt,
-    this.isPremium = true, // Default to premium
+    this.isPremium = true,
   });
 
   // --- 1. Best Friend ---

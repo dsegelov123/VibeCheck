@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/design_system.dart';
 import '../../core/security_service.dart';
 import '../home/dashboard_view.dart';
 
@@ -32,29 +33,21 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
-          ),
+          gradient: DesignSystem.authGradient,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 80, color: Colors.white),
+            const Icon(Icons.lock_outline, size: 80, color: DesignSystem.onAccent),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Locked',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: DesignSystem.h1.copyWith(color: DesignSystem.onAccent),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Please authenticate to unlock VibeCheck',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              style: DesignSystem.body.copyWith(color: DesignSystem.onAccent.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 48),
             ElevatedButton.icon(
@@ -62,10 +55,10 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
               icon: const Icon(Icons.fingerprint),
               label: const Text('Unlock'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF6366F1),
+                backgroundColor: DesignSystem.onAccent,
+                foregroundColor: DesignSystem.brandIndigo,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignSystem.buttonRadius)),
               ),
             ),
           ],

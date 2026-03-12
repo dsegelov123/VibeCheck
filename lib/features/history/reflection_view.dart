@@ -1,10 +1,13 @@
-import 'dart:ui';
+import '../../core/design_system.dart';
+import '../../core/app_theme.dart';
+import '../../core/components/vibe_scaffold.dart';
+import '../../providers/history_provider.dart';
+import 'journal_recording_view.dart';
+import 'journal_detail_view.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../providers/history_provider.dart';
-import '../../core/app_theme.dart';
-import '../../core/design_system.dart';
+import 'package:flutter/services.dart';
 
 class ReflectionView extends ConsumerWidget {
   const ReflectionView({super.key});
@@ -13,210 +16,248 @@ class ReflectionView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(historyProvider);
 
-    return Scaffold(
-      backgroundColor: DesignSystem.background,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildSliverAppBar(context),
-          if (history.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Text(
-                  'No memories captured yet.',
-                  style: DesignSystem.bodyMedium,
-                ),
+    return VibeScaffold(
+      title: 'Journal',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.person_outline_rounded),
+          onPressed: () => Scaffold.of(context).openEndDrawer(),
+        ),
+      ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const JournalRecordingView()),
+          );
+        },
+        backgroundColor: DesignSystem.accent,
+        elevation: 4,
+        child: const Icon(Icons.mic_rounded, color: DesignSystem.onAccent, size: 28),
+      ),
+      body: history.isEmpty
+          ? Center(
+              child: Text(
+                'No memories captured yet.',
+                style: DesignSystem.body,
               ),
             )
-          else ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: _buildHighlightCard(context, history.first),
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  _buildHighlightCard(context, history.first),
+                  const SizedBox(height: 24),
+                  ..._buildGroupedHistory(context, history.skip(1).toList()),
+                  const SizedBox(height: 100), // Reserve space for FAB
+                ],
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildHistoryCard(context, history[index + 1]),
-                  childCount: history.length > 1 ? history.length - 1 : 0,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 
   Widget _buildHighlightCard(BuildContext context, dynamic snapshot) {
-    // We still use mood colors for subtle accents, but the card itself is white
-    final baseColor = AppTheme.getMoodColor(snapshot.mood);
-    final colors = [baseColor, baseColor.withValues(alpha: 0.5)];
-    final moodColor = colors[0];
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: AppTheme.cardDecoration(color: DesignSystem.background).copyWith(
-        border: Border.all(color: moodColor.withValues(alpha: 0.2), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-             children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: moodColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'LATEST REFLECTION',
-                    style: DesignSystem.labelBold.copyWith(fontSize: 10, color: moodColor),
-                  ),
-                ),
-                Icon(Icons.auto_awesome_rounded, color: moodColor.withValues(alpha: 0.3), size: 20),
-             ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            snapshot.transcript,
-            style: DesignSystem.titleLarge.copyWith(fontSize: 22, height: 1.4),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: DesignSystem.vibeRed.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.psychology_rounded, color: DesignSystem.vibeRed, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Captured via Companion',
-                style: DesignSystem.labelBold.copyWith(fontSize: 12),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSliverAppBar(BuildContext context) {
-    return SliverAppBar(
-      expandedHeight: 140,
-      backgroundColor: DesignSystem.background,
-      elevation: 0,
-      pinned: true,
-      automaticallyImplyLeading: false,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-        title: Text(
-          'Reflections',
-          style: DesignSystem.titleLarge.copyWith(fontSize: 24),
-        ),
-        background: Stack(
+    final moodColor = AppTheme.getMoodColor(snapshot.mood);
+    return GestureDetector(
+      onTap: () {
+        if (snapshot.isJournalEntry) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => JournalDetailView(snapshot: snapshot),
+            ),
+          );
+        }
+      },
+      child: Container(
+        decoration: AppTheme.cardDecoration(),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Positioned(
-              right: -20,
-              top: -20,
-              child: Icon(
-                Icons.auto_awesome,
-                size: 200,
-                color: DesignSystem.textSlateDeep.withValues(alpha: 0.02),
+            _buildWeatherStrip(snapshot.moodDistribution),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'LATEST REFLECTION',
+                        style: DesignSystem.label,
+                      ),
+                      Icon(Icons.auto_awesome_rounded, color: moodColor.withValues(alpha: 0.3), size: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    snapshot.isJournalEntry ? (snapshot.journalTitleSummary ?? 'Untitled Entry') : snapshot.transcript,
+                    style: DesignSystem.h2,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(
+                        snapshot.isJournalEntry ? Icons.mic_rounded : Icons.psychology_rounded, 
+                        color: DesignSystem.accent, 
+                        size: 16
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        snapshot.isJournalEntry ? 'Voice Journal Entry' : 'Captured via Companion',
+                        style: DesignSystem.label.copyWith(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.menu_rounded, color: DesignSystem.textSlateDeep),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
-        const SizedBox(width: 8),
-      ],
     );
   }
 
-  Widget _buildHistoryCard(BuildContext context, dynamic snapshot) {
-    final baseColor = AppTheme.getMoodColor(snapshot.mood);
-    final colors = [baseColor, baseColor.withValues(alpha: 0.5)];
-    final moodColor = colors[0];    final dateStr = DateFormat('MMM dd, h:mm a').format(snapshot.timestamp);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: AppTheme.cardDecoration(),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: moodColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    snapshot.mood.toUpperCase(),
-                    style: DesignSystem.labelBold.copyWith(fontSize: 10, color: moodColor),
-                  ),
+  List<Widget> _buildGroupedHistory(BuildContext context, List<dynamic> snapshots) {
+    if (snapshots.isEmpty) return [];
+
+    // Grouping logic
+    final Map<String, List<dynamic>> grouped = {};
+    for (var snapshot in snapshots) {
+      final date = snapshot.timestamp;
+      final now = DateTime.now();
+      String key;
+      if (date.year == now.year && date.month == now.month && date.day == now.day) {
+        key = 'TODAY';
+      } else if (date.isAfter(now.subtract(const Duration(days: 1)))) {
+        key = 'YESTERDAY';
+      } else {
+        key = DateFormat('MMMM dd').format(date).toUpperCase();
+      }
+      grouped.putIfAbsent(key, () => []).add(snapshot);
+    }
+
+    List<Widget> widgets = [];
+    grouped.forEach((dateLabel, items) {
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
+            children: [
+              Text(
+                dateLabel,
+                style: DesignSystem.label.copyWith(
+                  letterSpacing: 1.5,
                 ),
-                Text(
-                  dateStr,
-                  style: DesignSystem.labelMuted.copyWith(fontSize: 10, fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '"${snapshot.transcript}"',
-              style: DesignSystem.bodyMedium.copyWith(color: DesignSystem.textSlateDeep, fontWeight: FontWeight.w700),
-            ),
-            if (snapshot.companionResponse != null) ...[
-              const SizedBox(height: 16),
-              Container(
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Divider(color: DesignSystem.borderColor.withValues(alpha: 0.5))),
+            ],
+          ),
+        ),
+      );
+      widgets.addAll(items.map((item) => _buildHistoryCard(context, item)));
+    });
+
+    return widgets;
+  }
+
+  Widget _buildHistoryCard(BuildContext context, dynamic snapshot) {
+    final moodColor = AppTheme.getMoodColor(snapshot.mood);
+    final timeStr = DateFormat('h:mm a').format(snapshot.timestamp);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
+        onTap: () {
+          if (snapshot.isJournalEntry) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => JournalDetailView(snapshot: snapshot)),
+            );
+          }
+        },
+        child: Container(
+          decoration: AppTheme.cardDecoration(),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              _buildWeatherStrip(snapshot.moodDistribution),
+              Padding(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: DesignSystem.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: moodColor.withValues(alpha: 0.05)),
-                ),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: moodColor.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.psychology_rounded, color: moodColor, size: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(color: moodColor, shape: BoxShape.circle),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              snapshot.mood.toUpperCase(),
+                               style: DesignSystem.label,
+                            ),
+                          ],
+                        ),
+                        Text(
+                          timeStr,
+                          style: DesignSystem.label,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        snapshot.companionResponse!,
-                        style: DesignSystem.bodyMedium.copyWith(fontSize: 14, color: DesignSystem.textSlateDeep, fontWeight: FontWeight.w600),
-                      ),
+                    const SizedBox(height: 12),
+                    Text(
+                      snapshot.isJournalEntry ? (snapshot.journalTitleSummary ?? 'Untitled Entry') : '"${snapshot.transcript}"',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: DesignSystem.body,
                     ),
                   ],
                 ),
               ),
             ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildWeatherStrip(Map<String, double>? distribution) {
+    if (distribution == null || distribution.isEmpty) {
+      return const SizedBox(height: 3); // Fallback for old entries
+    }
+
+    // Filter only moods > 0.05 to keep it clean
+    final validMoods = distribution.entries
+        .where((e) => e.value > 0.05)
+        .toList();
+    
+    // Sort buy score descending
+    validMoods.sort((a, b) => b.value.compareTo(a.value));
+
+    return SizedBox(
+      height: 3,
+      width: double.infinity,
+      child: Row(
+        children: validMoods.map((entry) {
+          return Expanded(
+            flex: (entry.value * 100).toInt(),
+            child: Container(
+              color: AppTheme.getMoodColor(entry.key),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

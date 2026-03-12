@@ -48,7 +48,7 @@ class VibeCheckApp extends ConsumerWidget {
     final authState = ref.watch(authServiceProvider);
 
     Widget home;
-    if (!onboardingDone) {
+    if (onboardingDone) {
       debugPrint('VibeCheckApp: Rendering OnboardingView');
       home = const OnboardingView();
     } else {

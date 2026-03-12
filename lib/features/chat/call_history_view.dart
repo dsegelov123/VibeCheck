@@ -5,6 +5,8 @@ import '../../core/design_system.dart';
 import '../../core/voice_call_repository.dart';
 import '../../models/companion_persona.dart';
 import '../../models/voice_call_log.dart';
+import '../../core/app_theme.dart';
+import '../../core/components/vibe_scaffold.dart';
 
 final voiceCallLogsProvider = FutureProvider.family<List<VoiceCallLog>, String>((ref, companionId) async {
   final repo = ref.read(voiceCallRepositoryProvider);
@@ -20,35 +22,22 @@ class CallHistoryView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final logsAsync = ref.watch(voiceCallLogsProvider(persona.id));
 
-    return Scaffold(
-      backgroundColor: DesignSystem.surface,
-      appBar: AppBar(
-        backgroundColor: DesignSystem.surface,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'Call Transcripts',
-          style: DesignSystem.titleLarge.copyWith(color: DesignSystem.textSlateDeep),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: DesignSystem.textSlateDeep),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+    return VibeScaffold(
+      title: 'Call Transcripts',
       body: logsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: DesignSystem.vibeRed)),
-        error: (err, stack) => Center(child: Text('Error loading logs: $err')),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err', style: DesignSystem.body)),
         data: (logs) {
           if (logs.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.history_toggle_off, size: 60, color: DesignSystem.textSlateMuted),
+                  Icon(Icons.history_toggle_off, size: 48, color: DesignSystem.textMuted),
                   const SizedBox(height: 16),
                   Text(
                     'No voice calls yet.',
-                    style: DesignSystem.bodyMedium.copyWith(color: DesignSystem.textSlateMuted),
+                    style: DesignSystem.label,
                   ),
                 ],
               ),
@@ -65,29 +54,19 @@ class CallHistoryView extends ConsumerWidget {
               return GestureDetector(
                 onTap: () => _showTranscriptModal(context, log),
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: DesignSystem.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: DesignSystem.textSlateMuted.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: AppTheme.cardDecoration(),
                   child: Row(
                     children: [
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          color: DesignSystem.vibeRedLight,
+                          color: DesignSystem.accent.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.phone_callback_rounded, color: DesignSystem.vibeRed),
+                        child: Icon(Icons.phone_callback_rounded, color: DesignSystem.accent, size: 20),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -96,17 +75,17 @@ class CallHistoryView extends ConsumerWidget {
                           children: [
                             Text(
                               dateFormat.format(log.startTime),
-                              style: DesignSystem.labelBold.copyWith(color: DesignSystem.textSlateDeep),
+                              style: DesignSystem.h2.copyWith(fontSize: 16),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               '${log.duration.inMinutes}m ${log.duration.inSeconds % 60}s duration',
-                              style: DesignSystem.bodyMedium.copyWith(color: DesignSystem.textSlateMuted),
+                              style: DesignSystem.label,
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: DesignSystem.textSlateMuted),
+                      Icon(Icons.chevron_right, color: DesignSystem.textMuted),
                     ],
                   ),
                 ),
@@ -122,13 +101,12 @@ class CallHistoryView extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: DesignSystem.background.withValues(alpha: 0.0),
       builder: (context) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: DesignSystem.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          decoration: AppTheme.cardDecoration(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -139,7 +117,7 @@ class CallHistoryView extends ConsumerWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                       color: DesignSystem.textSlateMuted.withValues(alpha: 0.3),
+                       color: DesignSystem.textMuted.withValues(alpha: 0.2),
                        borderRadius: BorderRadius.circular(2),
                     ),
                  ),
@@ -149,7 +127,7 @@ class CallHistoryView extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
                   'Call Transcript',
-                  style: DesignSystem.titleLarge.copyWith(color: DesignSystem.textSlateDeep),
+                  style: DesignSystem.h2,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -162,8 +140,8 @@ class CallHistoryView extends ConsumerWidget {
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       log.fullTranscript.isEmpty ? "No words spoken." : log.fullTranscript,
-                      style: DesignSystem.bodyMedium.copyWith(
-                        color: DesignSystem.textSlateDeep,
+                      style: DesignSystem.body.copyWith(
+                        fontSize: 14,
                         height: 1.6,
                       ),
                     ),
@@ -176,14 +154,15 @@ class CallHistoryView extends ConsumerWidget {
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: DesignSystem.vibeRed,
-                      foregroundColor: Colors.white,
+                      backgroundColor: DesignSystem.accent,
+                      foregroundColor: DesignSystem.surface,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(DesignSystem.buttonRadius),
                       ),
+                      elevation: 0,
                     ),
-                    child: const Text('Close', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: Text('Close', style: DesignSystem.h2.copyWith(fontSize: 16, color: DesignSystem.surface)),
                   ),
                 ),
               ),

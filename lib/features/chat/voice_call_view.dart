@@ -195,10 +195,7 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
            // Status Text Top
            Text(
              _getStatusText(),
-             style: DesignSystem.labelBold.copyWith(
-               color: DesignSystem.textSlateMuted,
-               fontSize: 14,
-             ),
+             style: DesignSystem.label,
            ).animate(key: ValueKey('status_$_callState')).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
            
            const SizedBox(height: 60),
@@ -220,7 +217,7 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
                       height: 250,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: DesignSystem.vibeRed.withValues(alpha: 0.05),
+                        color: DesignSystem.accent.withValues(alpha: 0.05),
                       ),
                     ).animate(onPlay: (c) => c.repeat())
                      .scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 1000.ms, curve: Curves.easeOut)
@@ -245,25 +242,25 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
                       height: 160,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: DesignSystem.vibeRedLight,
+                        color: DesignSystem.accent.withValues(alpha: 0.1),
                         border: Border.all(
                           color: _callState == CallState.processing 
-                              ? DesignSystem.vibeRed.withValues(alpha: 0.5) 
-                              : DesignSystem.vibeRed.withValues(alpha: 0.1), 
+                              ? DesignSystem.accent.withValues(alpha: 0.5) 
+                              : DesignSystem.accent.withValues(alpha: 0.1), 
                           width: _callState == CallState.processing ? 4 : 2
                         ),
                         boxShadow: [
                            BoxShadow(
-                             color: DesignSystem.vibeRed.withValues(alpha: 0.1),
+                             color: DesignSystem.accent.withValues(alpha: 0.1),
                              blurRadius: 30,
                              spreadRadius: 10,
                            )
                         ],
                       ),
-                      child: const Icon(Icons.person, size: 80, color: DesignSystem.vibeRed),
+                      child: Icon(Icons.person, size: 80, color: DesignSystem.accent),
                     ),
                   ).animate(target: _callState == CallState.processing ? 1 : 0)
-                   .shimmer(duration: 2.seconds, color: Colors.white.withValues(alpha: 0.5)),
+                   .shimmer(duration: 2.seconds, color: DesignSystem.surface.withValues(alpha: 0.5)),
                ],
              ),
            ),
@@ -276,8 +273,7 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
                  ? "Tap Maya when you are done speaking." 
                  : _getEmpatheticStatus(),
              textAlign: TextAlign.center,
-             style: DesignSystem.bodyMedium.copyWith(
-               color: DesignSystem.textSlateDeep,
+             style: DesignSystem.body.copyWith(
                fontStyle: FontStyle.italic,
              ),
            ).animate(key: ValueKey('empathy_$_callState')).fadeIn(duration: 600.ms),
@@ -310,12 +306,13 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: _isMuted ? DesignSystem.textSlateDeep : DesignSystem.surface,
+                color: _isMuted ? DesignSystem.textDeep : DesignSystem.surface,
                 shape: BoxShape.circle,
+                border: Border.all(color: DesignSystem.borderColor),
               ),
               child: Icon(
                 _isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
-                color: _isMuted ? Colors.white : DesignSystem.textSlateDeep,
+                color: _isMuted ? DesignSystem.surface : DesignSystem.textDeep,
               ),
             ),
           ),
@@ -326,12 +323,12 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
             child: Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(
-                color: DesignSystem.errorRed,
+              decoration: BoxDecoration(
+                color: DesignSystem.accent,
                 shape: BoxShape.circle,
                 boxShadow: DesignSystem.softShadow,
               ),
-              child: const Icon(Icons.call_end_rounded, color: Colors.white, size: 32),
+              child: const Icon(Icons.call_end_rounded, color: DesignSystem.surface, size: 32),
             ),
           ).animate().slideY(begin: 1, end: 0, curve: Curves.easeOutBack, duration: 600.ms),
           
@@ -345,12 +342,13 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: _showTranscript ? DesignSystem.vibeRed.withValues(alpha: 0.1) : DesignSystem.surface,
+                color: _showTranscript ? DesignSystem.accent.withValues(alpha: 0.1) : DesignSystem.surface,
                 shape: BoxShape.circle,
+                border: Border.all(color: DesignSystem.borderColor),
               ),
               child: Icon(
                 Icons.subtitles_rounded,
-                color: _showTranscript ? DesignSystem.vibeRed : DesignSystem.textSlateDeep,
+                color: _showTranscript ? DesignSystem.accent : DesignSystem.textDeep,
               ),
             ),
           ),
@@ -366,9 +364,11 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
       right: 24,
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: DesignSystem.glassClear.copyWith(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+        decoration: BoxDecoration(
+          color: DesignSystem.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: DesignSystem.borderColor),
+          boxShadow: DesignSystem.softShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,23 +377,23 @@ class _VoiceCallViewState extends ConsumerState<VoiceCallView> {
             if (_latestUserTranscript.isNotEmpty) ...[
               Text(
                 "You",
-                style: DesignSystem.labelBold.copyWith(color: DesignSystem.textSlateMuted, fontSize: 10),
+                style: DesignSystem.label,
               ),
               const SizedBox(height: 4),
               Text(
                 _latestUserTranscript,
-                style: DesignSystem.bodyMedium.copyWith(color: DesignSystem.textSlateDeep),
+                style: DesignSystem.body,
               ),
               const SizedBox(height: 16),
             ],
             Text(
               widget.persona.name,
-              style: DesignSystem.labelBold.copyWith(color: DesignSystem.vibeRed, fontSize: 10),
+              style: DesignSystem.label.copyWith(color: DesignSystem.accent),
             ),
             const SizedBox(height: 4),
             Text(
               _latestAiTranscript.isEmpty ? "..." : _latestAiTranscript,
-              style: DesignSystem.bodyMedium.copyWith(color: DesignSystem.textSlateDeep, fontWeight: FontWeight.w600),
+              style: DesignSystem.body,
             ),
           ],
         ),

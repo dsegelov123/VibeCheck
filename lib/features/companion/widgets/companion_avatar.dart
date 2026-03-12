@@ -34,15 +34,9 @@ class CompanionAvatar extends StatelessWidget {
           child: Container(
             width: 320,
             height: 480,
-            decoration: BoxDecoration(
+            decoration: AppTheme.cardDecoration(
               borderRadius: BorderRadius.circular(160),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 40,
-                  spreadRadius: -10,
-                ),
-              ],
+              boxShadow: DesignSystem.premiumShadow,
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(160),
@@ -77,8 +71,8 @@ class CompanionAvatar extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.1),
+                            DesignSystem.background.withValues(alpha: 0.0),
+                            DesignSystem.textDeep.withValues(alpha: 0.1),
                           ],
                         ),
                       ),
@@ -134,7 +128,7 @@ class CompanionAvatar extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(180),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: (0.2 - (index * 0.1)) + (expansion * 0.2)),
+                  color: DesignSystem.onAccent.withValues(alpha: (0.2 - (index * 0.1)) + (expansion * 0.2)),
                   width: 2 + (expansion * 2),
                 ),
               ),
@@ -174,11 +168,7 @@ class CompanionAvatar extends StatelessWidget {
   }
 
   Color _getMoodColor(String mood) {
-    if (['joy', 'excited', 'proud'].contains(mood)) return Colors.amber;
-    if (['sad', 'grieving', 'lonely'].contains(mood)) return Colors.blue;
-    if (['calm', 'reflective', 'tired', 'bored'].contains(mood)) return Colors.greenAccent;
-    if (['anxious', 'overwhelmed', 'fearful', 'angry', 'frustrated', 'annoyed'].contains(mood)) return Colors.red;
-    return Colors.white;
+    return AppTheme.getMoodColor(mood);
   }
 }
 
@@ -188,7 +178,7 @@ class NoisePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withValues(alpha: opacity);
+    final paint = Paint()..color = DesignSystem.onAccent.withValues(alpha: opacity);
     final random = Random();
     for (int i = 0; i < 2000; i++) {
       canvas.drawCircle(

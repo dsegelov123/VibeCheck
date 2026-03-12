@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/design_system.dart';
+import '../../core/app_theme.dart';
 import '../auth/auth_screen.dart';
 import '../monetization/pro_paywall_view.dart';
-import '../../core/app_theme.dart';
 import '../../core/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,7 +39,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: DesignSystem.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -58,17 +59,17 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                         width: _currentPage == index ? 24 : 8,
                         decoration: BoxDecoration(
                           color: _currentPage == index
-                              ? const Color(0xFF6366F1)
-                              : const Color(0xFFCBD5E1),
+                              ? DesignSystem.brandIndigo
+                              : DesignSystem.textDeep.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
                     ),
                   ),
                   TextButton(
-                    onPressed: _finishOnboarding,
-                    child: const Text('Skip', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
-                  )
+                    onPressed: _onNext,
+                    child: Text('Skip', style: DesignSystem.label),
+                  ),
                 ],
               ),
             ),
@@ -87,13 +88,13 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                     title: 'Welcome to VibeCheck',
                     subtitle: 'Track your emotional weather and find clarity in the chaos of daily life.',
                     icon: Icons.auto_awesome_rounded,
-                    color: const Color(0xFF6366F1), // Indigo
+                    color: DesignSystem.brandIndigo,
                   ),
                   _buildPage(
                     title: 'Meet Your Companions',
                     subtitle: 'Chat with specialized AI personas—from a gentle listener to a fierce motivation coach.',
                     icon: Icons.forum_rounded,
-                    color: const Color(0xFF10B981), // Emerald
+                    color: DesignSystem.success,
                   ),
                   _buildSoftPaywallPage(),
                 ],
@@ -108,14 +109,14 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                 height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E293B),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                    backgroundColor: DesignSystem.textDeep,
+                    foregroundColor: DesignSystem.surface,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignSystem.buttonRadius)),
                   ),
                   onPressed: _onNext,
                   child: Text(
                     _currentPage == 2 ? 'ENTER APP' : 'CONTINUE',
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                    style: DesignSystem.body,
                   ),
                 ),
               ),
@@ -144,22 +145,14 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF1E293B),
-              height: 1.1,
-              letterSpacing: -1,
-            ),
+            style: DesignSystem.h1,
           ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
           const SizedBox(height: 24),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF64748B),
-              height: 1.5,
+            style: DesignSystem.body.copyWith(
+              color: DesignSystem.textMuted,
             ),
           ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
         ],
@@ -173,35 +166,25 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.stars_rounded, size: 80, color: Colors.amber),
+          const Icon(Icons.stars_rounded, size: 80, color: DesignSystem.premium),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'Unlock VibeCheck PRO',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF1E293B),
-              height: 1.1,
-              letterSpacing: -1,
-            ),
+            style: DesignSystem.h1,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Go deeper with 10 additional expert AI companions, infinite memory, and advanced emotional insights.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF64748B),
-              height: 1.5,
-            ),
+            style: DesignSystem.body.copyWith(color: DesignSystem.textMuted),
           ),
           const SizedBox(height: 40),
           
           ElevatedButton.icon(
              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber.shade100,
-                foregroundColor: Colors.amber.shade900,
+                backgroundColor: DesignSystem.premium.withValues(alpha: 0.1),
+                foregroundColor: DesignSystem.premium,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -210,7 +193,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProPaywallView()));
              }, 
              icon: const Icon(Icons.workspace_premium_rounded),
-             label: const Text('VIEW PRO TRIAL PLANS', style: TextStyle(fontWeight: FontWeight.w800)),
+             label: Text('VIEW PRO TRIAL PLANS', style: DesignSystem.label),
           ),
         ],
       ).animate().fadeIn(duration: 500.ms),

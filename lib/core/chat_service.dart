@@ -8,8 +8,32 @@ import 'local_chat_repository.dart';
 import 'user_memory_service.dart';
 import 'notification_service.dart';
 import '../../providers/mood_provider.dart';
+import '../../providers/history_provider.dart';
+import '../../models/emotional_snapshot.dart';
 
-// Provides the list of chat messages for a specific companion
+// Provides suggested topics to start a conversation with a specific persona
+final starterChipsProvider = FutureProvider.family<List<String>, String>((ref, companionId) async {
+  final persona = CompanionPersona.all.firstWhere(
+    (p) => p.id == companionId,
+    orElse: () => CompanionPersona.maya,
+  );
+  
+  // Simulated delay for "AI thinking"
+  await Future.delayed(const Duration(milliseconds: 500));
+  
+  switch (persona.role) {
+    case 'The Motivation Coach':
+      return ["How do I stay consistent?", "Help me plan my day", "I'm feeling discouraged"];
+    case 'The Mindfulness Guide':
+      return ["Guided breathing", "Dealing with stress", "Finding peace"];
+    case 'The Career Mentor':
+      return ["Negotiating a raise", "Conflict with a coworker", "Career pivot advice"];
+    case 'The Relationship Advisor':
+      return ["Communication tips", "Setting boundaries", "First date jitters"];
+    default:
+      return ["How are you?", "What's on your mind?", "Tell me a story"];
+  }
+});
 final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier, List<ChatMessage>, String>((ref, companionId) {
   return ChatMessagesNotifier(
     companionId,
@@ -89,10 +113,27 @@ class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
     // 2. Read memory and current mood to enrich the AI context
     final UserProfile userProfile = _ref.read(userProfileProvider);
     
-    // 2b. Real-time mood detection from text (Phase 24)
-    final textMood = await _sentimentService.analyzeTextSentiment(text);
-    if (textMood != null) {
-      _ref.read(moodProvider.notifier).state = textMood;
+    // 2b. Real-time mood detection and snapshot creation (Phase 29)
+    try {
+      final analysis = await _sentimentService.analyzeText(text);
+      final snapshot = EmotionalSnapshot(
+        id: DateTime.now().toIso8601String(),
+        timestamp: DateTime.now(),
+        mood: analysis['mood'] ?? 'Calmness',
+        transcript: text,
+        sentimentScores: Map<String, double>.from(analysis['scores'] ?? {}),
+        moodDistribution: Map<String, double>.from(analysis['moodDistribution'] ?? {}),
+        companionResponse: analysis['response'],
+        isJournalEntry: false,
+      );
+
+      // Add to history (this also triggers weather updates)
+      await _ref.read(historyProvider.notifier).addSnapshot(snapshot);
+      
+      // Update current mood for immediate chat tone adjustment
+      _ref.read(moodProvider.notifier).state = snapshot.mood;
+    } catch (e) {
+      debugPrint('ChatService: Sentiment analysis failed: $e');
     }
     
     final String currentMood = _ref.read(moodProvider);

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/user_memory_service.dart';
+import '../../core/design_system.dart';
+import '../../core/app_theme.dart';
 import '../../models/user_profile.dart';
 import '../../models/companion_persona.dart';
 
@@ -18,7 +20,7 @@ class MemoryVaultView extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Memory Vault'),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: DesignSystem.background.withValues(alpha: 0.0),
         elevation: 0,
       ),
       body: CustomScrollView(
@@ -43,6 +45,9 @@ class MemoryVaultView extends ConsumerWidget {
         onPressed: () => _showAddFactDialog(context, ref),
         label: const Text('Add Fact'),
         icon: const Icon(Icons.add),
+        backgroundColor: DesignSystem.textDeep,
+        foregroundColor: DesignSystem.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignSystem.buttonRadius)),
       ),
     );
   }
@@ -55,9 +60,9 @@ class MemoryVaultView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(title, style: DesignSystem.h2),
             const SizedBox(height: 4),
-            Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(subtitle, style: DesignSystem.body.copyWith(color: DesignSystem.textMuted)),
           ],
         ),
       ),
@@ -66,10 +71,10 @@ class MemoryVaultView extends ConsumerWidget {
 
   Widget _buildFactList(BuildContext context, WidgetRef ref, List<UserFact> facts, {required bool isActive}) {
     if (facts.isEmpty) {
-      return const SliverToBoxAdapter(
+      return SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text('None yet', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text('None yet', style: DesignSystem.body.copyWith(fontStyle: FontStyle.italic, color: DesignSystem.textMuted)),
         ),
       );
     }
@@ -85,19 +90,24 @@ class MemoryVaultView extends ConsumerWidget {
 
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 0,
+            color: DesignSystem.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignSystem.radius),
+              side: const BorderSide(color: DesignSystem.borderColor, width: DesignSystem.borderWidth),
+            ),
             child: ListTile(
               contentPadding: const EdgeInsets.all(12),
               leading: CircleAvatar(
                 backgroundImage: AssetImage(persona.avatarAsset),
                 radius: 20,
               ),
-              title: Text(fact.text, style: const TextStyle(fontWeight: FontWeight.w500)),
+              title: Text(fact.text, style: DesignSystem.body),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 4.0),
                 child: Text(
                   'Learned by ${persona.name} • ${DateFormat.yMMMd().format(fact.timestamp)}',
-                  style: const TextStyle(fontSize: 11),
+                  style: DesignSystem.label,
                 ),
               ),
               trailing: Row(
@@ -109,7 +119,7 @@ class MemoryVaultView extends ConsumerWidget {
                     onPressed: () => _toggleFactTier(ref, fact, isActive),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                    icon: Icon(Icons.delete_outline, color: DesignSystem.error, size: 20),
                     onPressed: () => _deleteFact(ref, fact, isActive),
                   ),
                 ],
@@ -156,15 +166,24 @@ class MemoryVaultView extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Memory Fact'),
+        backgroundColor: DesignSystem.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignSystem.radius)),
+        title: Text('Add Memory Fact', style: DesignSystem.h2),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'e.g., I love hiking in the rain'),
+          decoration: InputDecoration(
+            hintText: 'e.g., I love hiking in the rain',
+            hintStyle: DesignSystem.body.copyWith(color: DesignSystem.textMuted),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignSystem.radius)),
+          ),
           autofocus: true,
           maxLines: null,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text('Cancel', style: DesignSystem.label),
+          ),
           TextButton(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
@@ -181,7 +200,7 @@ class MemoryVaultView extends ConsumerWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Add'),
+            child: Text('Add', style: DesignSystem.body),
           ),
         ],
       ),
